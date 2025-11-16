@@ -12,7 +12,7 @@ set(ENGINE_BUILD True)
 project(game)
 
 # DOWNLOAD ALL THE SUBMODULES
-find_package(Git QUIET)
+find_package(Git)
 if (GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
 	# Update submodules as needed
 	option(GIT_SUBMODULE "Check submodules during build" ON)
@@ -29,11 +29,11 @@ endif()
 
 # CHECK ALL THE SUBMODULES
 if (NOT EXISTS "${PROJECT_SOURCE_DIR}/external/windowing/CMakeLists.txt")
-	message(FATAL_ERROR "The windowing submdule was not downloaded!")
+	message(FATAL_ERROR "The windowing submodule was not downloaded!")
 endif()
 
 if (NOT EXISTS "${PROJECT_SOURCE_DIR}/external/math/CMakeLists.txt")
-	message(FATAL_ERROR "The math submdule was not downloaded!")
+	message(FATAL_ERROR "The math submodule was not downloaded!")
 endif()
 
 if (NOT EXISTS "${PROJECT_SOURCE_DIR}/external/collision/CMakeLists.txt")
