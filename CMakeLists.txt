@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.22)
 # set the project name
 project(game)
 
-if (NOT ENGINE_BUILD)
-  set (ENGINE_BUILD true)
+if (NOT HAS_STANDALONE_PREDECESSOR)
+  set (HAS_STANDALONE_PREDECESSOR true)
 
   # all libraries built by this project are copied into the output directory.
   set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -17,7 +17,7 @@ if (NOT ENGINE_BUILD)
     option(GIT_SUBMODULE "Check submodules during build" ON)
     if (GIT_SUBMODULES)
       message(STATUS "Submodule update")
-      execute_process(COMMAND $(GIT_EXECUTABLE) submodule update --init --recursive 
+      execute_process(COMMAND $(GIT_EXECUTABLE) submodule update --init --recursive
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
       RESULT_VARIABLE GIT_SUBMOD_RESULT)
       if (NOT GIT_SUBMOD_RESULT EQUAL "0")
@@ -94,7 +94,7 @@ target_link_libraries(${PROJECT_NAME}
 						PRIVATE loaders
 						PRIVATE renderer)
 
-target_include_directories(${PROJECT_NAME} PUBLIC 
+target_include_directories(${PROJECT_NAME} PUBLIC
 							"${PROJECT_BINARY_DIR}"
 							"${PROJECT_SOURCE_DIR}/include"
 							)
