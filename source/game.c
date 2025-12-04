@@ -1,12 +1,12 @@
 /**
  * @file game.c
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-11-08
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #include <library/allocator/allocator.h>
 #include <library/os/os.h>
@@ -40,7 +40,7 @@ set_level_to_load(const char* source)
 }
 
 static
-level_context_t 
+level_context_t
 get_context()
 {
   level_context_t context;
@@ -104,18 +104,16 @@ level_update(void)
   opengl_swapbuffer();
 }
 
-void 
+void
 game_init(
   int32_t _width,
   int32_t _height,
   const char *_data_dir)
 {
-  opengl_parameters_t opengl_params;
-
   window_data = create_window(
-    "custom_window", 
-    "game", 
-    _width, 
+    "custom_window",
+    "game",
+    _width,
     _height);
 
   set_periodic_timers_resolution(1);
@@ -123,8 +121,7 @@ game_init(
 
   input_set_client(window_data.handle);
 
-  opengl_params.device_context = window_data.device_context;
-  opengl_initialize(&opengl_params);
+  opengl_initialize((opengl_parameters_t *)&window_data.device_context);
   renderer_initialize();
 
   level_init(_width, _height, _data_dir);
