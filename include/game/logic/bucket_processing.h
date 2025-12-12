@@ -17,7 +17,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <game/logic/collision_data.h>
-#include <math/c/vector3f.h>
+#include <math/vector3f.h>
 
 
 typedef struct bvh_t bvh_t;

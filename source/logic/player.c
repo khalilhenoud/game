@@ -22,9 +22,9 @@
 #include <collision/face.h>
 #include <entity/c/scene/camera.h>
 #include <entity/c/spatial/bvh.h>
-#include <math/c/capsule.h>
-#include <math/c/matrix4f.h>
-#include <math/c/vector3f.h>
+#include <math/capsule.h>
+#include <math/matrix4f.h>
+#include <math/vector3f.h>
 #include <renderer/renderer_opengl.h>
 
 #define KEY_MOVEMENT_MODE         '9'

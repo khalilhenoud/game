@@ -16,7 +16,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <math/c/vector3f.h>
+#include <math/vector3f.h>
 
 
 typedef struct bvh_t bvh_t;

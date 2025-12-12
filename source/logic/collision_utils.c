@@ -14,7 +14,7 @@
 #include <game/logic/collision_utils.h>
 #include <collision/face.h>
 #include <entity/c/spatial/bvh.h>
-#include <math/c/capsule.h>
+#include <math/capsule.h>
 
 #define FLOOR_ANGLE_DEGREES 60
 

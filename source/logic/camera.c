@@ -13,7 +13,7 @@
 #include <game/input/input.h>
 #include <game/logic/camera.h>
 #include <entity/c/scene/camera.h>
-#include <math/c/matrix4f.h>
+#include <math/matrix4f.h>
 
 #define KEY_RESET_CAMERA          'C'
 #define VERTICAL_LIMIT            TO_RADIANS(60)
