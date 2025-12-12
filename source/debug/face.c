@@ -1,12 +1,12 @@
 /**
  * @file face.c
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-03-29
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #include <assert.h>
 #include <string.h>
@@ -37,14 +37,14 @@ static debug_face_frame_t debug_frame;
 
 void
 add_debug_face_to_frame(
-  face_t *face, 
+  face_t *face,
   vector3f *normal,
-  debug_color_t color, 
+  debug_color_t color,
   int32_t thickness)
 {
   assert(face && normal && "face or normal is null!");
   assert(
-    debug_frame.used < DEBUG_FACES_MAX_COUNT && 
+    debug_frame.used < DEBUG_FACES_MAX_COUNT &&
     "reached the limit of debug faces!");
 
   {
@@ -59,9 +59,9 @@ add_debug_face_to_frame(
 static
 void
 draw_debug_face(
-  face_t *face, 
-  vector3f *normal, 
-  debug_color_t *debug_color, 
+  face_t *face,
+  vector3f *normal,
+  debug_color_t *debug_color,
   int32_t thickness,
   pipeline_t *pipeline,
   const int32_t disable_depth)
@@ -99,9 +99,9 @@ draw_debug_face_frame(
 {
   for (uint32_t i = 0; i < debug_frame.used; ++i) {
     draw_debug_face(
-      &debug_frame.faces[i].face, 
-      &debug_frame.faces[i].normal, 
-      &debug_frame.faces[i].color, 
+      &debug_frame.faces[i].face,
+      &debug_frame.faces[i].normal,
+      &debug_frame.faces[i].color,
       debug_frame.faces[i].thickness,
       pipeline,
       disable_depth);

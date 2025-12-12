@@ -1,16 +1,16 @@
 /**
  * @file flags.c
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-04-06
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
-#include <game/input/input.h>
 #include <game/debug/flags.h>
 #include <game/debug/text.h>
+#include <game/input/input.h>
 
 #define KEY_COLLISION_QUERY       '3'
 #define KEY_COLLISION_FACE        '4'
@@ -29,25 +29,25 @@ push_debug_flags_to_text_frame(void)
   float y = 150.f;
 
   add_debug_text_to_frame(
-    "[3] RENDER COLLISION QUERIES", 
+    "[3] RENDER COLLISION QUERIES",
     g_debug_flags.draw_collision_query ? red : white, 0.f, (y+=20.f));
   add_debug_text_to_frame(
-    "[4] RENDER COLLISION FACE", 
+    "[4] RENDER COLLISION FACE",
     g_debug_flags.draw_collided_face ? red : white, 0.f, (y+=20.f));
   add_debug_text_to_frame(
-    "[5] SHOW SNAPPING/FALLING STATE", 
+    "[5] SHOW SNAPPING/FALLING STATE",
     g_debug_flags.draw_status ? red : white, 0.f, (y+=20.f));
   add_debug_text_to_frame(
-    "[6] DRAW IGNORED FACES", 
+    "[6] DRAW IGNORED FACES",
     g_debug_flags.draw_ignored_faces ? red : white, 0.f, (y+=20.f));
   add_debug_text_to_frame(
-    "[7] DISABLE DEPTH TEST DEBUG", 
+    "[7] DISABLE DEPTH TEST DEBUG",
     g_debug_flags.disable_depth_debug ? red : white, 0.f, (y+=20.f));
   add_debug_text_to_frame(
-    "[8] LOCK DIRECTIONAL MOTION", 
+    "[8] LOCK DIRECTIONAL MOTION",
     g_debug_flags.use_locked_motion ? red : white, 0.f, (y+=20.f));
   add_debug_text_to_frame(
-    "[P] DRAW STEP UP FACE", 
+    "[P] DRAW STEP UP FACE",
     g_debug_flags.draw_step_up ? red : white, 0.f, (y+=20.f));
 }
 

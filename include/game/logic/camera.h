@@ -1,12 +1,12 @@
 /**
  * @file camera.h
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-04-09
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #ifndef CAMERA_PROCESS_LOGIC_H
 #define CAMERA_PROCESS_LOGIC_H
@@ -30,7 +30,7 @@ camera_init(
 
 void
 camera_update(
-  camera_t* camera, 
+  camera_t* camera,
   float delta_time);
 
 #ifdef __cplusplus

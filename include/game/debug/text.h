@@ -1,12 +1,12 @@
 /**
  * @file text.h
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-03-29
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #ifndef DEBUG_TEXT_H
 #define DEBUG_TEXT_H
@@ -37,10 +37,10 @@ draw_debug_text_frame(
 
 void
 render_text_to_screen(
-  font_runtime_t* font, 
+  font_runtime_t* font,
   uint32_t font_image_id,
-  pipeline_t* pipeline, 
-  const char** text, 
+  pipeline_t* pipeline,
+  const char** text,
   uint32_t count,
   const debug_color_t color,
   float x,

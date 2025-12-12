@@ -1,18 +1,18 @@
 /**
  * @file input.c
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2023-01-24
- * 
+ *
  * @copyright Copyright (c) 2023
- * 
+ *
  */
 #include <assert.h>
 #include <string.h>
 #include <game/input/input.h>
-#include <windowing/windowing.h>
 #include <library/os/os.h>
+#include <windowing/windowing.h>
 
 #define MOUSE_LBUTTON        0x01
 #define MOUSE_RBUTTON        0x02
@@ -91,7 +91,7 @@ input_update(void)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int32_t 
+int32_t
 is_key_pressed(int32_t key)
 {
   return s_keyboard_keys[key].is_pressed;
@@ -104,7 +104,7 @@ is_key_triggered(int32_t key)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int32_t 
+int32_t
 is_mouse_left_pressed()
 {
 	return s_mouse_keys[0].is_pressed;
@@ -140,7 +140,7 @@ is_mouse_right_triggered()
 	return s_mouse_keys[2].is_triggered;
 }
 
-void 
+void
 show_mouse_cursor(int32_t show)
 {
   if (show)
@@ -149,7 +149,7 @@ show_mouse_cursor(int32_t show)
     while (show_cursor(show) >= 0);
 }
 
-void 
+void
 get_position(int32_t *x, int32_t *y)
 {
 	cursor_pos_t point;
@@ -158,7 +158,7 @@ get_position(int32_t *x, int32_t *y)
 	*y = point.y;
 }
 
-void 
+void
 get_window_position(int32_t *x, int32_t *y)
 {
 	cursor_pos_t screen;
@@ -171,13 +171,13 @@ get_window_position(int32_t *x, int32_t *y)
 	*y = client.y;
 }
 
-void 
+void
 set_position(int32_t x, int32_t y)
 {
 	set_cursor_position(x, y);
 }
 
-void 
+void
 set_window_position(int32_t x, int32_t y)
 {
   win_point_t client;
@@ -187,7 +187,7 @@ set_window_position(int32_t x, int32_t y)
 	set_cursor_position((int32_t)client.x, (int32_t)client.y);
 }
 
-void 
+void
 center_cursor()
 {
 	win_rect_t rect;

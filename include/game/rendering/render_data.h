@@ -1,12 +1,12 @@
 /**
  * @file to_render_data.h
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2023-09-23
- * 
+ *
  * @copyright Copyright (c) 2023
- * 
+ *
  */
 #ifndef SCENE_RENDER_DATA
 #define SCENE_RENDER_DATA
@@ -16,11 +16,11 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <library/containers/cvector.h>
 #include <entity/c/mesh/color.h>
+#include <library/containers/cvector.h>
 
 
-// NOTE: This is all extremely rudimentary until the time when I implement a 
+// NOTE: This is all extremely rudimentary until the time when I implement a
 // scene graph module that can replace this.
 
 typedef struct scene_t scene_t;
@@ -56,35 +56,35 @@ struct packaged_scene_render_data_t {
 
 void
 free_render_data(
-  packaged_scene_render_data_t *render_data, 
+  packaged_scene_render_data_t *render_data,
   const allocator_t *allocator);
 
 void
 free_mesh_render_data(
-  packaged_mesh_data_t *mesh_data, 
+  packaged_mesh_data_t *mesh_data,
   const allocator_t *allocator);
 
-packaged_scene_render_data_t * 
+packaged_scene_render_data_t *
 load_scene_render_data(
-  scene_t *scene, 
+  scene_t *scene,
   const allocator_t *allocator);
 
 packaged_mesh_data_t *
 load_mesh_renderer_data(
-  mesh_t *mesh, 
-  const color_rgba_t color, 
+  mesh_t *mesh,
+  const color_rgba_t color,
   const allocator_t *allocator);
 
 void
 prep_packaged_render_data(
   const char *data_set,
   const char *folder,
-  packaged_scene_render_data_t *render_data, 
+  packaged_scene_render_data_t *render_data,
   const allocator_t *allocator);
 
 void
 cleanup_packaged_render_data(
-  packaged_scene_render_data_t *render_data, 
+  packaged_scene_render_data_t *render_data,
   const allocator_t *allocator);
 
 void

@@ -1,19 +1,19 @@
 /**
  * @file text.c
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-03-29
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #include <assert.h>
 #include <string.h>
 #include <game/debug/text.h>
+#include <entity/c/runtime/font.h>
 #include <renderer/pipeline.h>
 #include <renderer/renderer_opengl.h>
-#include <entity/c/runtime/font.h>
 
 #define DEBUG_TEXT_MAX_SIZE         256
 #define DEBUG_TEXT_MAX_ALLOWED      128
@@ -43,10 +43,10 @@ add_debug_text_to_frame(
   float y)
 {
   assert(
-    strlen(text) < DEBUG_TEXT_MAX_SIZE && 
+    strlen(text) < DEBUG_TEXT_MAX_SIZE &&
     "'text' is too long, keep it less than 256!");
   assert(
-    debug_frame.used < DEBUG_TEXT_MAX_ALLOWED && 
+    debug_frame.used < DEBUG_TEXT_MAX_ALLOWED &&
     "exceeded max allowed debug text entries per frame!");
 
   {
@@ -71,13 +71,13 @@ draw_debug_text_frame(
   for (uint32_t i = 0; i < debug_frame.used; ++i) {
     text = debug_frame.text[i].text;
     render_text_to_screen(
-      font, 
-      font_image_id, 
-      pipeline, 
+      font,
+      font_image_id,
+      pipeline,
       &text,
-      1, 
-      debug_frame.text[i].color, 
-      debug_frame.text[i].x, 
+      1,
+      debug_frame.text[i].color,
+      debug_frame.text[i].x,
       debug_frame.text[i].y);
   }
 
@@ -86,10 +86,10 @@ draw_debug_text_frame(
 
 void
 render_text_to_screen(
-  font_runtime_t* font, 
+  font_runtime_t* font,
   uint32_t font_image_id,
-  pipeline_t* pipeline, 
-  const char** text, 
+  pipeline_t* pipeline,
+  const char** text,
   uint32_t count,
   const debug_color_t color,
   float x,
@@ -124,30 +124,30 @@ render_text_to_screen(
 
       get_frustum(pipeline, &left, &right, &bottom, &top, &nearz, &farz);
       get_viewport_info(
-        pipeline, 
-        &viewport_left, 
-        &viewport_top, 
-        &viewport_right, 
+        pipeline,
+        &viewport_left,
+        &viewport_top,
+        &viewport_right,
         &viewport_bottom);
       set_orthographic(
-        pipeline, 
-        viewport_left, 
-        viewport_right, 
-        viewport_top, 
-        viewport_bottom, 
-        nearz, 
+        pipeline,
+        viewport_left,
+        viewport_right,
+        viewport_top,
+        viewport_bottom,
+        nearz,
         farz);
       update_projection(pipeline);
 
       push_matrix(pipeline);
       load_identity(pipeline);
       pre_translate(
-        pipeline, 
-        x, 
+        pipeline,
+        x,
         viewport_bottom - ((i + 1) * (float)font->font_height) - y, -2);
       pre_scale(
-        pipeline, 
-        (float)font->cell_width, 
+        pipeline,
+        (float)font->cell_width,
         (float)font->cell_height, 0);
       draw_unit_quads(bounds, str_length, font_image_id, r_color, pipeline);
       pop_matrix(pipeline);

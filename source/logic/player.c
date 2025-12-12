@@ -8,24 +8,24 @@
   *@copyright Copyright (c) 2023
   *
  */
-#include <stdint.h>
 #include <assert.h>
 #include <math.h>
-#include <collision/face.h>
-#include <math/c/vector3f.h>
-#include <math/c/matrix4f.h>
-#include <math/c/capsule.h>
-#include <entity/c/spatial/bvh.h>
-#include <entity/c/scene/camera.h>
-#include <renderer/renderer_opengl.h>
+#include <stdint.h>
+#include <game/debug/face.h>
+#include <game/debug/flags.h>
+#include <game/debug/text.h>
 #include <game/input/input.h>
-#include <game/logic/player.h>
-#include <game/logic/collision_utils.h>
 #include <game/logic/bucket_processing.h>
 #include <game/logic/camera.h>
-#include <game/debug/face.h>
-#include <game/debug/text.h>
-#include <game/debug/flags.h>
+#include <game/logic/collision_utils.h>
+#include <game/logic/player.h>
+#include <collision/face.h>
+#include <entity/c/scene/camera.h>
+#include <entity/c/spatial/bvh.h>
+#include <math/c/capsule.h>
+#include <math/c/matrix4f.h>
+#include <math/c/vector3f.h>
+#include <renderer/renderer_opengl.h>
 
 #define KEY_MOVEMENT_MODE         '9'
 #define KEY_SPEED_PLUS            '1'
@@ -39,7 +39,7 @@
 #define KEY_MOVE_DOWN             'E'
 
 #define REFERENCE_FRAME_TIME      0.033f
-#define ITERATIONS                16 
+#define ITERATIONS                16
 #define LIMIT_DISTANCE            EPSILON_FLOAT_MIN_PRECISION
 
 
@@ -110,17 +110,17 @@ update_velocity(float delta_time)
     mul.data[2] = s_player.velocity.data[2] > 0.f ? -1.f : 1.f;
 
     s_player.velocity.data[0] += mul.data[0] * friction;
-    s_player.velocity.data[0] = (mul.data[0] == -1.f) ? 
+    s_player.velocity.data[0] = (mul.data[0] == -1.f) ?
     fmax(s_player.velocity.data[0], 0.f) : fmin(s_player.velocity.data[0], 0.f);
 
     s_player.velocity.data[2] += mul.data[2] * friction;
-    s_player.velocity.data[2] = (mul.data[2] == -1.f) ? 
+    s_player.velocity.data[2] = (mul.data[2] == -1.f) ?
     fmax(s_player.velocity.data[2], 0.f) : fmin(s_player.velocity.data[2], 0.f);
 
     if (s_player.is_flying) {
       s_player.velocity.data[1] += mul.data[1] * friction;
-      s_player.velocity.data[1] = (mul.data[1] == -1.f) ? 
-        fmax(s_player.velocity.data[1], 0.f) : 
+      s_player.velocity.data[1] = (mul.data[1] == -1.f) ?
+        fmax(s_player.velocity.data[1], 0.f) :
         fmin(s_player.velocity.data[1], 0.f);
     }
   }
@@ -181,18 +181,18 @@ get_floor_index(const intersection_data_t *collisions)
   for (uint32_t i = 0; i < collisions->count; ++i)
     if (collisions->hits[i].flags == COLLIDED_FLOOR_FLAG)
       return (int32_t)i;
-  
+
   return -1;
 }
 
-// does a vertical sweep to determine if we can snap the provided capsule. the 
+// does a vertical sweep to determine if we can snap the provided capsule. the
 // sweep is from [+radius, -(diameter + (diameter/iterations))]. The error term
 // is necessary due to the collision term imprecision.
 static
 int32_t
 can_snap_vertically(
-  capsule_t capsule, 
-  intersection_info_t *info, 
+  capsule_t capsule,
+  intersection_info_t *info,
   float *out_y)
 {
   bvh_t *bvh = s_player.bvh;
@@ -204,15 +204,15 @@ can_snap_vertically(
   info->time = 1.f;
   info->flags = COLLIDED_NONE;
   info->bvh_face_index = (uint32_t)-1;
-  
+
   {
     capsule.center.data[1] += capsule.radius;
     collisions.count = get_time_of_impact(
-      bvh, 
-      &capsule, 
-      displacement, 
-      collisions.hits, 
-      ITERATIONS, 
+      bvh,
+      &capsule,
+      displacement,
+      collisions.hits,
+      ITERATIONS,
       LIMIT_DISTANCE);
 
     floor_index = get_floor_index(&collisions);
@@ -228,12 +228,12 @@ can_snap_vertically(
       face = get_extended_face(&face, capsule.radius * 2);
 
       {
-         // the capsule must have cleared the extended face. since we are 
+         // the capsule must have cleared the extended face. since we are
          // dealing with a capsule face, there might be no collision even if we
          // haven't cleared the floor face.
          vector3f penetration;
          point3f sphere_center;
-         capsule_face_classification_t classify = 
+         capsule_face_classification_t classify =
            classify_capsule_face(
              &capsule, &face, normal, 0, &penetration, &sphere_center);
 
@@ -272,9 +272,9 @@ update_vertical_velocity(float delta_time)
   int32_t floor_index;
   intersection_info_t info = { 1.f, COLLIDED_NONE, (uint32_t)-1 };
   float out_y;
-  
+
   if (
-    can_snap_vertically(s_player.capsule, &info, &out_y) && 
+    can_snap_vertically(s_player.capsule, &info, &out_y) &&
     s_player.velocity.data[1] <= s_player.snap_velocity) {
     float copy_y = s_player.capsule.center.data[1];
     s_player.on_solid_floor = 1;
@@ -290,8 +290,8 @@ update_vertical_velocity(float delta_time)
       sprintf(text, "SNAPPING %f", distance);
       add_debug_text_to_frame(text, green, 400.f, 300.f);
       add_debug_face_to_frame(
-        cvector_as(&bvh->faces, i, face_t), 
-        cvector_as(&bvh->normals, i, vector3f), 
+        cvector_as(&bvh->faces, i, face_t),
+        cvector_as(&bvh->normals, i, vector3f),
         color, 1);
     }
   } else
@@ -321,7 +321,7 @@ step_up_debug_data(float delta, const intersection_info_t *info)
   }
 }
 
-static 
+static
 uint32_t
 has_any_walls(
   bvh_t *const bvh,
@@ -341,14 +341,14 @@ has_any_walls(
 static
 void
 display_debug_normal(
-  const vector3f *normal, 
-  debug_color_t color, 
-  float x, 
+  const vector3f *normal,
+  debug_color_t color,
+  float x,
   float y)
 {
   char text[512];
   memset(text, 0, sizeof(text));
-  sprintf(text, "NORMAL %.3f %.3f %.3f", 
+  sprintf(text, "NORMAL %.3f %.3f %.3f",
   normal->data[0], normal->data[1], normal->data[2]);
   add_debug_text_to_frame(text, color, x, y);
 }
@@ -356,11 +356,11 @@ display_debug_normal(
 static
 uint32_t
 can_step_up(
-  bvh_t *const bvh, 
+  bvh_t *const bvh,
   const intersection_data_t *collisions,
-  capsule_t copy, 
-  vector3f unit, 
-  intersection_info_t *info, 
+  capsule_t copy,
+  vector3f unit,
+  intersection_info_t *info,
   float *out_y)
 {
   capsule_t original = copy;
@@ -370,13 +370,13 @@ can_step_up(
 
   if (
     any_wall &&
-    !is_in_valid_space(bvh, &copy) && 
+    !is_in_valid_space(bvh, &copy) &&
     can_snap_vertically(copy, info, out_y)) {
     original.center.data[1] = *out_y;
     if (is_in_valid_space(bvh, &original))
       return 1;
   }
-  
+
   return 0;
 }
 
@@ -433,7 +433,7 @@ handle_collision_detection(const vector3f displacement)
   for (uint32_t i = 0; i < face_indices_count; ++i) {
     add_debug_face_to_frame(
     bvh->faces + face_indices[i],
-    bvh->normals + face_indices[i], 
+    bvh->normals + face_indices[i],
     yellow, 2);
   }
 #endif
@@ -443,7 +443,7 @@ handle_collision_detection(const vector3f displacement)
       bvh,
       capsule,
       velocity,
-      collisions.hits, 
+      collisions.hits,
       ITERATIONS,
       LIMIT_DISTANCE);
 
@@ -456,8 +456,8 @@ handle_collision_detection(const vector3f displacement)
 
       if (!is_in_valid_space(s_player.bvh, &s_player.capsule))
       {
-        // this is occuring because we are removing the back face, we should 
-        // replace removing the backface with using the tangent plane for 
+        // this is occuring because we are removing the back face, we should
+        // replace removing the backface with using the tangent plane for
         // collision reaction.
         // for now we are simply resetting the position.
         s_player.capsule.center = previous;
@@ -466,7 +466,7 @@ handle_collision_detection(const vector3f displacement)
           bvh,
           capsule,
           velocity,
-          collisions.hits, 
+          collisions.hits,
           ITERATIONS,
           LIMIT_DISTANCE);
 
@@ -502,11 +502,11 @@ handle_collision_detection(const vector3f displacement)
           continue;
         }
       }
-      
+
       {
         vector3f normal;
         collision_flags_t l_flags = COLLIDED_NONE;
-        collision_flags_t flags_array[] = { 
+        collision_flags_t flags_array[] = {
           COLLIDED_FLOOR_FLAG, COLLIDED_WALLS_FLAG | COLLIDED_CEILING_FLAG };
         uint32_t cflags_array[] = { 0, 1 };
         debug_color_t color_array[] = { green, red };
@@ -515,10 +515,10 @@ handle_collision_detection(const vector3f displacement)
         for (uint32_t i = 0; i < 2; ++i) {
           l_flags = get_averaged_normal_filtered(
             &unit_copy,
-            bvh, 
-            &normal, 
-            collisions.hits, 
-            collisions.count, 
+            bvh,
+            &normal,
+            collisions.hits,
+            collisions.count,
             s_player.on_solid_floor, flags_array[i], cflags_array[i]);
 
           if (l_flags != COLLIDED_NONE) {
@@ -549,20 +549,20 @@ player_init(
   bvh_t *bvh)
 {
 #if 0
-  player_start.data[0] = 1333.98950f; 
+  player_start.data[0] = 1333.98950f;
   player_start.data[1] = -403.995117f;
-  player_start.data[2] = -1637.12292f; 
+  player_start.data[2] = -1637.12292f;
 #endif
 
   vector3f at = player_start; at.data[2] -= 1.f;
   vector3f up = {0.f, 1.f, 0.f};
   camera_init(camera, player_start, at, up);
-  
-  s_player.acceleration.data[0] = s_player.acceleration.data[1] = 
+
+  s_player.acceleration.data[0] = s_player.acceleration.data[1] =
   s_player.acceleration.data[2] = 5.f;
-  s_player.velocity.data[0] = s_player.velocity.data[1] = 
+  s_player.velocity.data[0] = s_player.velocity.data[1] =
   s_player.velocity.data[2] = 0.f;
-  s_player.velocity_limit.data[0] = s_player.velocity_limit.data[1] = 
+  s_player.velocity_limit.data[0] = s_player.velocity_limit.data[1] =
   s_player.velocity_limit.data[2] = 10.f;
   s_player.gravity = 1.f;
   s_player.friction = 2.f;
@@ -578,7 +578,7 @@ player_init(
   s_player.bvh = bvh;
   s_player.energy_cutoff = 0.25f;
 
-  if (!is_in_valid_space(bvh, &s_player.capsule)) 
+  if (!is_in_valid_space(bvh, &s_player.capsule))
     ensure_in_valid_space(bvh, &s_player.capsule);
 }
 
@@ -590,10 +590,10 @@ player_update(float delta_time)
 
   // TODO: cap the detla time when debugging.
   delta_time = fmin(delta_time, REFERENCE_FRAME_TIME);
-  
+
   camera_update(s_player.camera, delta_time);
   update_velocity(delta_time);
-  if (!s_player.is_flying) 
+  if (!s_player.is_flying)
     update_vertical_velocity(delta_time);
 
   displacement = get_world_relative_velocity(delta_time);
@@ -609,7 +609,7 @@ player_update(float delta_time)
   if (!s_player.on_solid_floor) {
     float multiplier = delta_time / REFERENCE_FRAME_TIME;
     s_player.velocity.data[1] -= s_player.gravity * multiplier;
-    s_player.velocity.data[1] = 
+    s_player.velocity.data[1] =
       fmax(s_player.velocity.data[1], -s_player.velocity_limit.data[1]);
   }
 
@@ -628,19 +628,19 @@ player_update(float delta_time)
 
   // increase velocity limit
   if (is_key_pressed(KEY_SPEED_PLUS)) {
-    s_player.velocity_limit.data[0] = 
-    s_player.velocity_limit.data[1] = 
+    s_player.velocity_limit.data[0] =
+    s_player.velocity_limit.data[1] =
     s_player.velocity_limit.data[2] += 0.25f;
   }
 
   // decrease velocity limit.
   if (is_key_pressed(KEY_SPEED_MINUS)) {
-    s_player.velocity_limit.data[0] = 
-    s_player.velocity_limit.data[1] = 
+    s_player.velocity_limit.data[0] =
+    s_player.velocity_limit.data[1] =
     s_player.velocity_limit.data[2] -= 0.25f;
-    s_player.velocity_limit.data[0] = 
-    s_player.velocity_limit.data[1] = 
-    s_player.velocity_limit.data[2] = 
+    s_player.velocity_limit.data[0] =
+    s_player.velocity_limit.data[1] =
+    s_player.velocity_limit.data[2] =
       fmax(s_player.velocity_limit.data[2], 0.125f);
   }
 
@@ -652,16 +652,16 @@ player_update(float delta_time)
     float y = 100.f;
     char array[256];
     snprintf(
-      array, 256, 
-      "CAPSULE POSITION:     %.2f     %.2f     %.2f", 
-      s_player.capsule.center.data[0], 
-      s_player.capsule.center.data[1], 
+      array, 256,
+      "CAPSULE POSITION:     %.2f     %.2f     %.2f",
+      s_player.capsule.center.data[0],
+      s_player.capsule.center.data[1],
       s_player.capsule.center.data[2]);
 
     add_debug_text_to_frame(
       array, green, 0.f, (y+=20.f));
     add_debug_text_to_frame(
-      "[9] SWITCH CAMERA MODE", 
+      "[9] SWITCH CAMERA MODE",
       s_player.is_flying ? red : white, 0.f, (y+=20.f));
   }
 }

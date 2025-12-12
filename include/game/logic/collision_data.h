@@ -1,12 +1,12 @@
 /**
  * @file collision_data.h
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-03-28
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #ifndef COLLISION_DATA_H
 #define COLLISION_DATA_H

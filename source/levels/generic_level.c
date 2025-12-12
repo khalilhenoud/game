@@ -1,31 +1,31 @@
 /**
  * @file level1.c
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2024-01-06
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 #include <assert.h>
-#include <game/input/input.h>
 #include <game/debug/flags.h>
-#include <game/logic/player.h>
-#include <game/levels/load_scene.h>
-#include <game/rendering/render_data.h>
 #include <game/debug/text.h>
+#include <game/input/input.h>
+#include <game/levels/load_scene.h>
+#include <game/logic/player.h>
+#include <game/rendering/render_data.h>
+#include <entity/c/level/level.h>
+#include <entity/c/mesh/color.h>
+#include <entity/c/mesh/mesh_utils.h>
+#include <entity/c/runtime/font.h>
+#include <entity/c/runtime/font_utils.h>
+#include <entity/c/scene/camera.h>
+#include <entity/c/scene/scene.h>
+#include <entity/c/spatial/bvh.h>
 #include <library/framerate_controller/framerate_controller.h>
 #include <renderer/pipeline.h>
 #include <renderer/renderer_opengl.h>
-#include <entity/c/runtime/font.h>
-#include <entity/c/runtime/font_utils.h>
-#include <entity/c/mesh/color.h>
-#include <entity/c/mesh/mesh_utils.h>
-#include <entity/c/scene/camera.h>
-#include <entity/c/scene/scene.h>
-#include <entity/c/level/level.h>
-#include <entity/c/spatial/bvh.h>
 
 #define TILDE   0xC0
 #define KEY_EXIT_LEVEL           '0'
@@ -69,7 +69,7 @@ load_level(
 
   pipeline_set_default(&pipeline);
   set_viewport(
-    &pipeline, 0.f, 0.f, 
+    &pipeline, 0.f, 0.f,
     (float)context.viewport.width, (float)context.viewport.height);
   update_viewport(&pipeline);
 
@@ -88,9 +88,9 @@ load_level(
   controller = controller_allocate(allocator, 60, 1u);
 
   player_init(
-    scene->metadata.player_start, 
-    scene->metadata.player_angle, 
-    camera, 
+    scene->metadata.player_start,
+    scene->metadata.player_angle,
+    camera,
     bvh);
 }
 
@@ -128,12 +128,12 @@ update_level(const allocator_t* allocator)
 
     text[0] = "press [0] to return to room selection";
     render_text_to_screen(
-      font, 
-      font_image_id, 
-      &pipeline, 
-      text, 
+      font,
+      font_image_id,
+      &pipeline,
+      text,
       1,
-      white, 
+      white,
       0.f, 0.f);
   } else {
     const char* text[6];
@@ -151,12 +151,12 @@ update_level(const allocator_t* allocator)
     text[4] = "[~] CAMERA UNLOCK/LOCK";
     text[5] = "[1/2/WASD/EQ] CAMERA SPEED/MOVEMENT";
     render_text_to_screen(
-      font, 
-      font_image_id, 
-      &pipeline, 
-      text, 
+      font,
+      font_image_id,
+      &pipeline,
+      text,
       6,
-      white, 
+      white,
       0.f, 0.f);
   }
 

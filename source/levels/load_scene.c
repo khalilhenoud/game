@@ -4,33 +4,33 @@
  * @brief
  * @version 0.1
  * @date 2023-07-16
- * 
+ *
  * @copyright Copyright (c) 2023
- * 
+ *
  */
 #include <assert.h>
-#include <string.h>
 #include <stdint.h>
+#include <string.h>
 #include <game/levels/load_scene.h>
 #include <entity/c/scene/scene.h>
 #include <library/allocator/allocator.h>
 #include <library/containers/cvector.h>
 #include <library/filesystem/io.h>
-#include <library/string/cstring.h>
 #include <library/streams/binary_stream.h>
+#include <library/string/cstring.h>
 
 
 scene_t*
 load_scene(
-  const char* dataset, 
-  const char* folder, 
+  const char* dataset,
+  const char* folder,
   const char* file,
   const allocator_t* allocator)
 {
   // TODO: This is temporary, this needs to be generalized in packaged content.
   char fullpath[1024] = {0};
   snprintf(fullpath, 1024, "%s\\%s\\%s.bin", dataset, folder, file);
-  
+
   scene_t *scene;
   binary_stream_t stream;
 

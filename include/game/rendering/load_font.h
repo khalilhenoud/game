@@ -4,9 +4,9 @@
  * @brief acts like a glue between different parts of the engine.
  * @version 0.1
  * @date 2023-07-02
- * 
+ *
  * @copyright Copyright (c) 2023
- * 
+ *
  */
 #ifndef CSV_TO_FONT
 #define CSV_TO_FONT
@@ -24,15 +24,15 @@ typedef struct allocator_t allocator_t;
 font_runtime_t*
 load_font(
   const char* data_set,
-  const char* image_file, 
-  const char* data_file, 
+  const char* image_file,
+  const char* data_file,
   const allocator_t* allocator);
 
 void
 load_font_inplace(
-  const char* data_set, 
-  const font_t* font, 
-  font_runtime_t* runtime, 
+  const char* data_set,
+  const font_t* font,
+  font_runtime_t* runtime,
   const allocator_t* allocator);
 
 #ifdef __cplusplus

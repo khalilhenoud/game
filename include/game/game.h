@@ -1,12 +1,12 @@
 /**
  * @file game.h
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-11-08
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #ifndef GAME_H
 #define GAME_H
@@ -20,7 +20,7 @@ extern "C" {
 
 
 GAME_API
-void 
+void
 game_init(
   int32_t width,
   int32_t height,

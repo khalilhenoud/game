@@ -1,12 +1,12 @@
 /**
  * @file flags.h
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-04-06
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #ifndef DEBUG_FLAGS_H
 #define DEBUG_FLAGS_H

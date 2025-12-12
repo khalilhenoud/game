@@ -1,25 +1,25 @@
 /**
  * @file collision_utils.c
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2024-08-05
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 #include <assert.h>
-#include <collision/face.h>
-#include <math/c/capsule.h>
-#include <entity/c/spatial/bvh.h>
-#include <game/logic/collision_utils.h>
 #include <game/debug/face.h>
 #include <game/debug/flags.h>
+#include <game/logic/collision_utils.h>
+#include <collision/face.h>
+#include <entity/c/spatial/bvh.h>
+#include <math/c/capsule.h>
 
 #define FLOOR_ANGLE_DEGREES 60
 
 
-uint32_t 
+uint32_t
 is_floor(bvh_t *bvh, uint32_t index)
 {
   float cosine_target = cosf(TO_RADIANS(FLOOR_ANGLE_DEGREES));
@@ -27,7 +27,7 @@ is_floor(bvh_t *bvh, uint32_t index)
   return normal_dot > cosine_target;
 }
 
-uint32_t 
+uint32_t
 is_ceiling(bvh_t *bvh, uint32_t index)
 {
   float cosine_target = cosf(TO_RADIANS(FLOOR_ANGLE_DEGREES));
@@ -53,8 +53,8 @@ get_collision_flag(bvh_t *bvh, uint32_t index)
 
 void
 populate_capsule_aabb(
-  bvh_aabb_t *aabb, 
-  const capsule_t *capsule, 
+  bvh_aabb_t *aabb,
+  const capsule_t *capsule,
   const float multiplier)
 {
   aabb->min_max[0] = capsule->center;
@@ -75,9 +75,9 @@ populate_capsule_aabb(
 
 void
 populate_moving_capsule_aabb(
-  bvh_aabb_t *aabb, 
-  const capsule_t *capsule, 
-  const vector3f *displacement, 
+  bvh_aabb_t *aabb,
+  const capsule_t *capsule,
+  const vector3f *displacement,
   const float multiplier)
 {
   bvh_aabb_t start_end[2];
@@ -107,7 +107,7 @@ is_in_valid_space(
   for (uint32_t used_index = 0; used_index < used; ++used_index) {
     bvh_node_t *node = cvector_as(&bvh->nodes, query[used_index], bvh_node_t);
     for (
-      uint32_t i = node->left_first, last = node->left_first + node->tri_count; 
+      uint32_t i = node->left_first, last = node->left_first + node->tri_count;
       i < last; ++i) {
       if (!bounds_intersect(&bounds, cvector_as(&bvh->bounds, i, bvh_aabb_t)))
         continue;
@@ -124,7 +124,7 @@ is_in_valid_space(
       length_sqrd = length_squared_v3f(&penetration);
 
       if (
-        classification != CAPSULE_FACE_NO_COLLISION && 
+        classification != CAPSULE_FACE_NO_COLLISION &&
         !IS_ZERO_LP(length_sqrd))
         return 0;
     }
@@ -152,7 +152,7 @@ ensure_in_valid_space(
   for (uint32_t used_index = 0; used_index < used; ++used_index) {
     bvh_node_t *node = cvector_as(&bvh->nodes, query[used_index], bvh_node_t);
     for (
-      uint32_t i = node->left_first, last = node->left_first + node->tri_count; 
+      uint32_t i = node->left_first, last = node->left_first + node->tri_count;
       i < last; ++i) {
 
       if (!bounds_intersect(&bounds, cvector_as(&bvh->bounds, i, bvh_aabb_t)))
@@ -226,8 +226,8 @@ get_time_of_impact(
         debug_color_t color = get_debug_color(bvh, i);
         int32_t width = is_floor(bvh, i) ? 3 : 2;
         add_debug_face_to_frame(
-          cvector_as(&bvh->faces, i, face_t), 
-          cvector_as(&bvh->normals, i, vector3f), 
+          cvector_as(&bvh->faces, i, face_t),
+          cvector_as(&bvh->normals, i, vector3f),
           color, width);
       }
     }
@@ -241,7 +241,7 @@ get_time_of_impact(
       bvh_node_t *node = cvector_as(&bvh->nodes, query[index], bvh_node_t);
       uint32_t i = node->left_first;
       uint32_t last = node->left_first + node->tri_count;
-      
+
       for (; i < last; ++i) {
         face_t *face = cvector_as(&bvh->faces, i, face_t);
         vector3f *normal = cvector_as(&bvh->normals, i, vector3f);

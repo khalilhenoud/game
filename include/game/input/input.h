@@ -1,12 +1,12 @@
 /**
  * @file input.h
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2023-01-23
- * 
+ *
  * @copyright Copyright (c) 2023
- * 
+ *
  */
 #ifndef INPUT_H
 #define INPUT_H
@@ -20,7 +20,7 @@ extern "C" {
 #define KEYBOARD_KEY_COUNT 256
 
 
-typedef 
+typedef
 struct keyboard_state_t {
   uint8_t state[KEYBOARD_KEY_COUNT];
 } keyboard_state_t;
@@ -33,7 +33,7 @@ enum mouse_keys {
   MOUSE_KEY_COUNT
 } mouse_keys;
 
-typedef 
+typedef
 struct mouse_state_t {
   int16_t state[MOUSE_KEY_COUNT];
 } mouse_state_t;
@@ -44,37 +44,37 @@ input_update(void);
 
 
 ////////////////////////////////////////////////////////////////////////////////
-int32_t 
+int32_t
 is_key_pressed(int32_t key);
 int32_t
 is_key_triggered(int32_t key);
 
 
 ////////////////////////////////////////////////////////////////////////////////
-int32_t 
+int32_t
 is_mouse_left_pressed();
 int32_t
 is_mouse_left_triggered();
 
-int32_t 
+int32_t
 is_mouse_mid_pressed();
 int32_t
 is_mouse_mid_triggered();
 
-int32_t 
+int32_t
 is_mouse_right_pressed();
 int32_t
 is_mouse_right_triggered();
 
 void
 show_mouse_cursor(int32_t show);
-void 
+void
 get_position(int32_t* x, int32_t* y);
-void 
+void
 get_window_position(int32_t* x, int32_t* y);
-void 
+void
 set_window_position(int32_t x, int32_t y);
-void 
+void
 center_cursor();
 
 void

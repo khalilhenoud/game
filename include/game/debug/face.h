@@ -1,12 +1,12 @@
 /**
  * @file face.h
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-03-29
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #ifndef DEBUG_FACE_H
 #define DEBUG_FACE_H
@@ -25,7 +25,7 @@ typedef struct vector3f vector3f;
 
 void
 add_debug_face_to_frame(
-  face_t *face, 
+  face_t *face,
   vector3f *normal,
   debug_color_t color,
   int32_t thickness);

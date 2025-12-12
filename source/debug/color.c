@@ -1,12 +1,12 @@
 /**
  * @file color.c
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-03-29
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #include <game/debug/color.h>
 

@@ -1,12 +1,12 @@
 /**
  * @file generic_level.h
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2024-01-06
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 #ifndef APP_GENERIC_LEVEL_H
 #define APP_GENERIC_LEVEL_H

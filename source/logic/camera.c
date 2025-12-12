@@ -1,17 +1,17 @@
 /**
  * @file camera.c
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-04-09
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #include <assert.h>
+#include <game/debug/flags.h>
 #include <game/input/input.h>
 #include <game/logic/camera.h>
-#include <game/debug/flags.h>
 #include <entity/c/scene/camera.h>
 #include <math/c/matrix4f.h>
 
@@ -88,7 +88,7 @@ handle_input(camera_t *camera)
 static
 void
 update_orientation(
-  camera_t *camera, 
+  camera_t *camera,
   float delta_time)
 {
   // used to keep track of the current maximum offset.
@@ -116,10 +116,10 @@ update_orientation(
   // limit the rotation along y, we test against the limit.
   frame_dy = -cursor.delta_y * VERTICAL_SENSITIVITY;
   tmp_y = current_y + frame_dy;
-  
+
   // limit the frame dy.
   frame_dy = (tmp_y > VERTICAL_LIMIT) ? (VERTICAL_LIMIT - current_y) : frame_dy;
-  frame_dy = (tmp_y < -VERTICAL_LIMIT) ? 
+  frame_dy = (tmp_y < -VERTICAL_LIMIT) ?
     (-VERTICAL_LIMIT - current_y) : frame_dy;
   current_y += frame_dy;
 
@@ -138,12 +138,12 @@ update_orientation(
 
 void
 camera_update(
-  camera_t *camera, 
+  camera_t *camera,
   float delta_time)
 {
   if (g_debug_flags.use_locked_motion)
     return;
-  
+
   handle_input(camera);
   update_orientation(camera, delta_time);
 }

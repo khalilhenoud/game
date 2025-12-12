@@ -1,7 +1,7 @@
 /**
   *@file collision_utils.h
   *@author khalilhenoud@gmail.com
-  *@brief 
+  *@brief
   *@version 0.1
   *@date 2024-08-05
   *
@@ -16,19 +16,19 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <math/c/vector3f.h>
-#include <game/logic/collision_data.h>
 #include <game/debug/color.h>
+#include <game/logic/collision_data.h>
+#include <math/c/vector3f.h>
 
 
 typedef struct bvh_t bvh_t;
 typedef struct bvh_aabb_t bvh_aabb_t;
 typedef struct capsule_t capsule_t;
 
-uint32_t 
+uint32_t
 is_floor(bvh_t *bvh, uint32_t index);
 
-uint32_t 
+uint32_t
 is_ceiling(bvh_t *bvh, uint32_t index);
 
 debug_color_t
@@ -39,15 +39,15 @@ get_collision_flag(bvh_t *bvh, uint32_t index);
 
 void
 populate_capsule_aabb(
-  bvh_aabb_t *aabb, 
-  const capsule_t *capsule, 
+  bvh_aabb_t *aabb,
+  const capsule_t *capsule,
   const float multiplier);
 
 void
 populate_moving_capsule_aabb(
-  bvh_aabb_t *aabb, 
-  const capsule_t *capsule, 
-  const vector3f *displacement, 
+  bvh_aabb_t *aabb,
+  const capsule_t *capsule,
+  const vector3f *displacement,
   const float multiplier);
 
 int32_t

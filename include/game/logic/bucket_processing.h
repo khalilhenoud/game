@@ -1,12 +1,12 @@
 /**
  * @file bucket_processing.h
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-03-28
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #ifndef BUCKET_PROCESSING_H
 #define BUCKET_PROCESSING_H
@@ -16,8 +16,8 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <math/c/vector3f.h>
 #include <game/logic/collision_data.h>
+#include <math/c/vector3f.h>
 
 
 typedef struct bvh_t bvh_t;
@@ -36,13 +36,13 @@ get_averaged_normal_filtered(
   const uint32_t adjust_non_walkable);
 
 /**
- * Processes the collision information into buckets, basically in groups. 
- * This is important for not over-representing face normals in collision 
- * calculation. It also serves to cull groups that nullify each other's 
+ * Processes the collision information into buckets, basically in groups.
+ * This is important for not over-representing face normals in collision
+ * calculation. It also serves to cull groups that nullify each other's
  * contributions. 'collision_info' is modified in this process, and an updated
  * 'info_used' is returned.
  */
-uint32_t 
+uint32_t
 process_collision_info(
   bvh_t *const bvh,
   const vector3f *velocity,

@@ -11,23 +11,23 @@
 #include <assert.h>
 #include <string.h>
 #include <game/rendering/render_data.h>
-#include <library/allocator/allocator.h>
-#include <library/string/cstring.h>
-#include <entity/c/scene/node.h>
-#include <entity/c/scene/scene.h>
-#include <entity/c/scene/camera.h>
-#include <entity/c/scene/light.h>
+#include <entity/c/mesh/color.h>
+#include <entity/c/mesh/material.h>
 #include <entity/c/mesh/mesh.h>
 #include <entity/c/mesh/mesh_utils.h>
-#include <entity/c/mesh/material.h>
 #include <entity/c/mesh/texture.h>
-#include <entity/c/mesh/color.h>
-#include <entity/c/runtime/texture.h>
-#include <entity/c/runtime/texture_utils.h>
 #include <entity/c/runtime/font.h>
 #include <entity/c/runtime/font_utils.h>
-#include <renderer/renderer_opengl.h>
+#include <entity/c/runtime/texture.h>
+#include <entity/c/runtime/texture_utils.h>
+#include <entity/c/scene/camera.h>
+#include <entity/c/scene/light.h>
+#include <entity/c/scene/node.h>
+#include <entity/c/scene/scene.h>
+#include <library/allocator/allocator.h>
+#include <library/string/cstring.h>
 #include <renderer/pipeline.h>
+#include <renderer/renderer_opengl.h>
 
 
 static

@@ -1,12 +1,12 @@
 /**
  * @file color.h
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-03-29
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #ifndef DEBUG_COLOR_H
 #define DEBUG_COLOR_H

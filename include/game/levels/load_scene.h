@@ -4,9 +4,9 @@
  * @brief convert a bin scene into an entity scene.
  * @version 0.1
  * @date 2023-07-16
- * 
+ *
  * @copyright Copyright (c) 2023
- * 
+ *
  */
 #ifndef BIN_TO_ENTITY_H
 #define BIN_TO_ENTITY_H
@@ -24,8 +24,8 @@ typedef struct allocator_t allocator_t;
 
 scene_t*
 load_scene(
-  const char* dataset, 
-  const char* folder, 
+  const char* dataset,
+  const char* folder,
   const char* file,
   const allocator_t* allocator);
 

@@ -1,17 +1,17 @@
 /**
  * @file memory_tracking.cpp
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-11-08
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #include <algorithm>
 #include <cassert>
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
 #include <vector>
 #include <game/memory_tracking/memory_tracking.h>
 
@@ -44,7 +44,7 @@ void* reallocate(void* block, size_t size)
   auto iter = std::find(allocated.begin(), allocated.end(), item);
   assert(iter != allocated.end());
   allocated.erase(iter);
-  
+
   block = tmp;
   allocated.push_back(uintptr_t(block));
 
@@ -55,14 +55,14 @@ void free_block(void* block)
 {
   allocated.erase(
     std::remove_if(
-      allocated.begin(), 
-      allocated.end(), 
-      [=](uintptr_t elem) { return (uintptr_t)block == elem; }), 
+      allocated.begin(),
+      allocated.end(),
+      [=](uintptr_t elem) { return (uintptr_t)block == elem; }),
     allocated.end());
   free(block);
 }
 
-void 
+void
 track_allocator_memory(allocator_t *allocator)
 {
   allocator->mem_alloc = allocate;

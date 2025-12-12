@@ -1,27 +1,27 @@
 /**
  * @file room_select.c
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2024-01-06
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 #include <assert.h>
+#include <game/debug/text.h>
 #include <game/input/input.h>
-#include <renderer/pipeline.h>
-#include <renderer/renderer_opengl.h>
-#include <entity/c/runtime/font.h>
-#include <entity/c/runtime/font_utils.h>
-#include <entity/c/mesh/color.h>
-#include <entity/c/scene/scene.h>
-#include <entity/c/level/level.h>
 #include <game/levels/load_scene.h>
 #include <game/rendering/render_data.h>
+#include <entity/c/level/level.h>
+#include <entity/c/mesh/color.h>
+#include <entity/c/runtime/font.h>
+#include <entity/c/runtime/font_utils.h>
+#include <entity/c/scene/scene.h>
 #include <library/filesystem/filesystem.h>
 #include <library/framerate_controller/framerate_controller.h>
-#include <game/debug/text.h>
+#include <renderer/pipeline.h>
+#include <renderer/renderer_opengl.h>
 
 #define KEY_EXIT_LEVEL           '0'
 
@@ -74,7 +74,7 @@ load_room_select(
 
   pipeline_set_default(&pipeline);
   set_viewport(
-    &pipeline, 0.f, 0.f, 
+    &pipeline, 0.f, 0.f,
     (float)context.viewport.width, (float)context.viewport.height);
   update_viewport(&pipeline);
 
@@ -116,24 +116,24 @@ update_room_select(const allocator_t* allocator)
     }
 
     render_text_to_screen(
-      font, 
+      font,
       font_image_id,
-      &pipeline, 
-      text, 
+      &pipeline,
+      text,
       used,
-      white, 
+      white,
       20.f, 0.f);
   }
 
   // only support 9 levels for now.
   for (int32_t i = 0; i < 9; ++i) {
     if (
-      is_key_triggered('1' + i) && 
-      i < (int32_t)rooms.used && 
+      is_key_triggered('1' + i) &&
+      i < (int32_t)rooms.used &&
       strcmp(rooms.dir_names[i], "room_select") != 0) {
         exit_room_select = i;
         break;
-      } 
+      }
   }
 
   flush_operations();
