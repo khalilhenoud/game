@@ -12,7 +12,7 @@
 #include <game/debug/flags.h>
 #include <game/input/input.h>
 #include <game/logic/camera.h>
-#include <entity/c/scene/camera.h>
+#include <entity/scene/camera.h>
 #include <math/matrix4f.h>
 
 #define KEY_RESET_CAMERA          'C'

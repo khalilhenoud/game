@@ -13,11 +13,11 @@
 #include <game/input/input.h>
 #include <game/levels/load_scene.h>
 #include <game/rendering/render_data.h>
-#include <entity/c/level/level.h>
-#include <entity/c/mesh/color.h>
-#include <entity/c/runtime/font.h>
-#include <entity/c/runtime/font_utils.h>
-#include <entity/c/scene/scene.h>
+#include <entity/level/level.h>
+#include <entity/mesh/color.h>
+#include <entity/runtime/font.h>
+#include <entity/runtime/font_utils.h>
+#include <entity/scene/scene.h>
 #include <library/filesystem/filesystem.h>
 #include <library/framerate_controller/framerate_controller.h>
 #include <renderer/pipeline.h>

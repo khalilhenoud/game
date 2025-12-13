@@ -12,9 +12,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <game/rendering/load_font.h>
-#include <entity/c/misc/font.h>
-#include <entity/c/runtime/font.h>
-#include <entity/c/runtime/font_utils.h>
+#include <entity/misc/font.h>
+#include <entity/runtime/font.h>
+#include <entity/runtime/font_utils.h>
 #include <library/allocator/allocator.h>
 #include <library/string/cstring.h>
 #include <library/string/fixed_string.h>

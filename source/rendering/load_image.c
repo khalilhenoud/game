@@ -12,8 +12,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <game/rendering/load_image.h>
-#include <entity/c/runtime/texture.h>
-#include <entity/c/runtime/texture_utils.h>
+#include <entity/runtime/texture.h>
+#include <entity/runtime/texture_utils.h>
 #include <library/allocator/allocator.h>
 #include <library/string/cstring.h>
 #include <library/string/fixed_string.h>

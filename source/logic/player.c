@@ -20,8 +20,8 @@
 #include <game/logic/collision_utils.h>
 #include <game/logic/player.h>
 #include <collision/face.h>
-#include <entity/c/scene/camera.h>
-#include <entity/c/spatial/bvh.h>
+#include <entity/scene/camera.h>
+#include <entity/spatial/bvh.h>
 #include <math/capsule.h>
 #include <math/matrix4f.h>
 #include <math/vector3f.h>

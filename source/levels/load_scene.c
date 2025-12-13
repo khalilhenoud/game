@@ -12,7 +12,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <game/levels/load_scene.h>
-#include <entity/c/scene/scene.h>
+#include <entity/scene/scene.h>
 #include <library/allocator/allocator.h>
 #include <library/containers/cvector.h>
 #include <library/filesystem/io.h>

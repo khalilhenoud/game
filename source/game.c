@@ -13,7 +13,7 @@
 #include <game/levels/generic_level.h>
 #include <game/levels/room_select.h>
 #include <game/memory_tracking/memory_tracking.h>
-#include <entity/c/level/level.h>
+#include <entity/level/level.h>
 #include <library/allocator/allocator.h>
 #include <library/os/os.h>
 #include <renderer/platform/opengl_platform.h>

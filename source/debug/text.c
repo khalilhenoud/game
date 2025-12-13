@@ -11,7 +11,7 @@
 #include <assert.h>
 #include <string.h>
 #include <game/debug/text.h>
-#include <entity/c/runtime/font.h>
+#include <entity/runtime/font.h>
 #include <renderer/pipeline.h>
 #include <renderer/renderer_opengl.h>
 
