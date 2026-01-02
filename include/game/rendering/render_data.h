@@ -25,6 +25,7 @@ extern "C" {
 
 typedef struct scene_t scene_t;
 typedef struct mesh_t mesh_t;
+typedef struct skinned_mesh_t skinned_mesh_t;
 typedef struct allocator_t allocator_t;
 typedef struct camera_t camera_t;
 typedef struct pipeline_t pipeline_t;
@@ -35,6 +36,13 @@ struct packaged_mesh_data_t {
   cvector_t texture_runtimes;           // texture_runtime_t
   cvector_t texture_ids;                // uint32_t
 } packaged_mesh_data_t;
+
+typedef
+struct packaged_skinned_mesh_data_t {
+  cvector_t skinned_mesh_render_data;   // mesh_render_data_t
+  cvector_t texture_runtimes;           // texture_runtime_t
+  cvector_t texture_ids;                // uint32_t
+} packaged_skinned_mesh_data_t;
 
 typedef
 struct packaged_font_data_t {
@@ -49,6 +57,7 @@ typedef
 struct packaged_scene_render_data_t {
   cvector_t node_data;                    // node_t
   packaged_mesh_data_t mesh_data;
+  packaged_skinned_mesh_data_t skinned_mesh_data;
   packaged_font_data_t font_data;
   cvector_t light_data;                   // renderer_light_t
   cvector_t camera_data;                  // camera_t
@@ -59,6 +68,7 @@ free_render_data(
   packaged_scene_render_data_t *render_data,
   const allocator_t *allocator);
 
+// UNUSED
 void
 free_mesh_render_data(
   packaged_mesh_data_t *mesh_data,
@@ -69,6 +79,7 @@ load_scene_render_data(
   scene_t *scene,
   const allocator_t *allocator);
 
+// UNUSED
 packaged_mesh_data_t *
 load_mesh_renderer_data(
   mesh_t *mesh,

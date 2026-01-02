@@ -15,6 +15,7 @@
 #include <entity/mesh/material.h>
 #include <entity/mesh/mesh.h>
 #include <entity/mesh/mesh_utils.h>
+#include <entity/mesh/skinned_mesh.h>
 #include <entity/mesh/texture.h>
 #include <entity/runtime/font.h>
 #include <entity/runtime/font_utils.h>
@@ -105,6 +106,26 @@ free_packaged_mesh_data_internal(
   cvector_cleanup2(&mesh_data->texture_ids);
 }
 
+static
+void
+free_packaged_skinned_mesh_data_internal(
+  packaged_skinned_mesh_data_t *skinned_mesh_data,
+  const allocator_t *allocator)
+{
+  assert(skinned_mesh_data && allocator);
+
+  free_mesh_render_data_array(
+    &skinned_mesh_data->skinned_mesh_render_data,
+    allocator);
+
+  free_texture_runtime_array(
+    &skinned_mesh_data->texture_runtimes,
+    allocator);
+
+  cvector_cleanup2(&skinned_mesh_data->texture_ids);
+}
+
+// UNUSED
 void
 free_mesh_render_data(
   packaged_mesh_data_t *mesh_data,
@@ -174,6 +195,8 @@ free_render_data(
 
   free_packaged_node_data_internal(&render_data->node_data, allocator);
   free_packaged_mesh_data_internal(&render_data->mesh_data, allocator);
+  free_packaged_skinned_mesh_data_internal(
+    &render_data->skinned_mesh_data, allocator);
   free_packaged_light_data_internal(&render_data->light_data, allocator);
   free_packaged_font_data_internal(&render_data->font_data, allocator);
   free_packaged_camera_data_internal(&render_data->camera_data, allocator);
@@ -234,6 +257,97 @@ load_scene_mesh_data(
 
     // Set the default texture and material colors to grey.
     t_runtime = cvector_as(&mesh_data->texture_runtimes, i, texture_runtime_t);
+    cstring_def(&t_runtime->texture.path);
+    // set a default ambient color.
+    r_data->ambient.data[0] =
+    r_data->ambient.data[1] = r_data->ambient.data[2] = 0.5f;
+    r_data->ambient.data[3] = 1.f;
+    // copy the ambient default color into the diffuse and specular.
+    array_size = sizeof(r_data->diffuse.data);
+    memcpy(r_data->diffuse.data, r_data->ambient.data, array_size);
+    memcpy(r_data->specular.data, r_data->ambient.data, array_size);
+
+    if (mesh->materials.used) {
+      material_t *mat = cvector_as(
+        &scene->material_repo, mesh->materials.indices[0], material_t);
+      // the types are compatible float_4, so copying is safe.
+      size_t size = sizeof(r_data->ambient.data);
+      memcpy(r_data->ambient.data, mat->ambient.data, size);
+      memcpy(r_data->diffuse.data, mat->diffuse.data, size);
+      memcpy(r_data->specular.data, mat->specular.data, size);
+
+      if (mat->textures.used) {
+        texture_t* texture = cvector_as(
+          &scene->texture_repo, mat->textures.data->index, texture_t);
+        cstring_setup(
+          &t_runtime->texture.path,
+          texture->path.str, allocator);
+      }
+    }
+  }
+}
+
+static
+void
+load_scene_skinned_mesh_data(
+  scene_t *scene,
+  packaged_skinned_mesh_data_t *skinned_mesh_data,
+  const allocator_t *allocator)
+{
+  assert(scene && skinned_mesh_data && allocator);
+
+  // We do match the arrays size between meshes and textures.
+  cvector_setup(
+    &skinned_mesh_data->skinned_mesh_render_data,
+    get_type_data(mesh_render_data_t),
+    0, allocator);
+  cvector_resize(
+    &skinned_mesh_data->skinned_mesh_render_data,
+    scene->skinned_mesh_repo.size);
+
+  cvector_setup(
+    &skinned_mesh_data->texture_runtimes,
+    get_type_data(texture_runtime_t),
+    0, allocator);
+  cvector_resize(
+    &skinned_mesh_data->texture_runtimes, scene->skinned_mesh_repo.size);
+
+  cvector_setup(
+    &skinned_mesh_data->texture_ids,
+    get_type_data(uint32_t),
+    0, allocator);
+  cvector_resize(
+    &skinned_mesh_data->texture_ids, scene->skinned_mesh_repo.size);
+  memset(
+    skinned_mesh_data->texture_ids.data,
+    0,
+    sizeof(uint32_t) * scene->skinned_mesh_repo.size);
+
+  for (uint32_t i = 0; i < scene->skinned_mesh_repo.size; ++i) {
+    texture_runtime_t *t_runtime = NULL;
+    skinned_mesh_t *skinned_mesh = cvector_as(
+      &scene->skinned_mesh_repo, i, skinned_mesh_t);
+    mesh_t *mesh = &skinned_mesh->mesh;
+    mesh_render_data_t* r_data = cvector_as(
+      &skinned_mesh_data->skinned_mesh_render_data, i, mesh_render_data_t);
+
+    uint32_t array_size = sizeof(float) * mesh->vertices.size;
+    r_data->vertex_count = (mesh->vertices.size)/3;
+    r_data->vertices = allocator->mem_alloc(array_size);
+    memcpy(r_data->vertices, mesh->vertices.data, array_size);
+    r_data->normals = allocator->mem_alloc(array_size);
+    memcpy(r_data->normals, mesh->normals.data, array_size);
+    r_data->uv_coords = allocator->mem_alloc(array_size);
+    memcpy(r_data->uv_coords, mesh->uvs.data, array_size);
+
+    array_size = sizeof(uint32_t) * mesh->indices.size;
+    r_data->indices_count = mesh->indices.size;
+    r_data->indices = allocator->mem_alloc(array_size);
+    memcpy(r_data->indices, mesh->indices.data, array_size);
+
+    // Set the default texture and material colors to grey.
+    t_runtime = cvector_as(
+      &skinned_mesh_data->texture_runtimes, i, texture_runtime_t);
     cstring_def(&t_runtime->texture.path);
     // set a default ambient color.
     r_data->ambient.data[0] =
@@ -414,12 +528,13 @@ load_scene_node_data(
         sizeof(uint32_t) * target->nodes.size);
 
       // copy the mesh payload indices.
-      cvector_setup(&target->meshes, get_type_data(uint32_t), 0, allocator);
-      cvector_resize(&target->meshes, source->meshes.size);
+      cvector_setup(
+        &target->resources, get_type_data(node_resource_t), 0, allocator);
+      cvector_resize(&target->resources, source->resources.size);
       memcpy(
-        target->meshes.data,
-        source->meshes.data,
-        sizeof(uint32_t) * target->meshes.size);
+        target->resources.data,
+        source->resources.data,
+        sizeof(node_resource_t) * target->resources.size);
     }
   }
 }
@@ -439,6 +554,8 @@ load_scene_render_data(
 
     load_scene_node_data(scene, &render_data->node_data, allocator);
     load_scene_mesh_data(scene, &render_data->mesh_data, allocator);
+    load_scene_skinned_mesh_data(
+      scene, &render_data->skinned_mesh_data, allocator);
     load_scene_font_data(scene, &render_data->font_data, allocator);
     load_scene_light_data(scene, &render_data->light_data, allocator);
     load_scene_camera_data(scene, &render_data->camera_data, allocator);
@@ -447,6 +564,7 @@ load_scene_render_data(
   }
 }
 
+// UNUSED
 packaged_mesh_data_t *
 load_mesh_renderer_data(
   mesh_t *mesh,
@@ -545,6 +663,24 @@ prep_packaged_render_data(
     }
   }
 
+  // load the images and upload them to the gpu.
+  for (
+    uint32_t i = 0;
+    i < render_data->skinned_mesh_data.skinned_mesh_render_data.size; ++i) {
+    texture_runtime_t *runtime = cvector_as(
+      &render_data->skinned_mesh_data.texture_runtimes, i, texture_runtime_t);
+    if (runtime->texture.path.str && runtime->texture.path.length) {
+      load_image_buffer(texture_path, runtime, allocator);
+      *cvector_as(&render_data->skinned_mesh_data.texture_ids, i, uint32_t) =
+        upload_to_gpu(
+          runtime->texture.path.str,
+          runtime->buffer.data,
+          runtime->width,
+          runtime->height,
+          (renderer_image_format_t)runtime->format);
+    }
+  }
+
   // do the same for the fonts.
   for (uint32_t i = 0; i < render_data->font_data.fonts.size; ++i) {
     font_runtime_t *font_runtime = cvector_as(
@@ -585,6 +721,15 @@ cleanup_packaged_render_data(
       evict_from_gpu(id);
   }
 
+  for (
+    uint32_t i = 0;
+    i < render_data->skinned_mesh_data.skinned_mesh_render_data.size; ++i) {
+    uint32_t id = *cvector_as(
+      &render_data->skinned_mesh_data.texture_ids, i, uint32_t);
+    if (id)
+      evict_from_gpu(id);
+  }
+
   for (uint32_t i = 0; i < render_data->font_data.fonts.size; ++i) {
     uint32_t id = *cvector_as(&render_data->font_data.texture_ids, i, uint32_t);
     if (id)
@@ -610,19 +755,38 @@ render_packaged_scene_data_node(
 
   {
     // draw the meshes belonging to this node.
-    for (uint32_t i = 0; i < node->meshes.size; ++i) {
-      uint32_t mesh_index = *cvector_as(&node->meshes, i, uint32_t);
-      draw_meshes(
-        cvector_as(
-          &render_data->mesh_data.mesh_render_data,
-          mesh_index,
-          mesh_render_data_t),
-        cvector_as(
-          &render_data->mesh_data.texture_ids,
-          mesh_index,
-          uint32_t),
-        1,
-        pipeline);
+    for (uint32_t i = 0; i < node->resources.size; ++i) {
+      node_resource_t *resource = cvector_as(
+        &node->resources, i, node_resource_t);
+
+      if (resource->type_id == get_type_id(mesh_t)) {
+        uint32_t mesh_index = resource->index;
+        draw_meshes(
+          cvector_as(
+            &render_data->mesh_data.mesh_render_data,
+            mesh_index,
+            mesh_render_data_t),
+          cvector_as(
+            &render_data->mesh_data.texture_ids,
+            mesh_index,
+            uint32_t),
+          1,
+          pipeline);
+      } else if (resource->type_id == get_type_id(skinned_mesh_t)) {
+        uint32_t mesh_index = resource->index;
+        draw_meshes(
+          cvector_as(
+            &render_data->skinned_mesh_data.skinned_mesh_render_data,
+            mesh_index,
+            mesh_render_data_t),
+          cvector_as(
+            &render_data->skinned_mesh_data.texture_ids,
+            mesh_index,
+            uint32_t),
+          1,
+          pipeline);
+      } else
+        assert(0);
     }
 
     // recurively call the child nodes.

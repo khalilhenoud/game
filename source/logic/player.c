@@ -572,13 +572,13 @@ player_init(
   s_player.capsule.radius = 16.f;
   s_player.snap_velocity = 0.f;
   s_player.snap_shift = s_player.capsule.radius / 2.f;
-  s_player.is_flying = 0;
+  s_player.is_flying = bvh ? 0 : 1;
   s_player.on_solid_floor = 0;
   s_player.camera = camera;
   s_player.bvh = bvh;
   s_player.energy_cutoff = 0.25f;
 
-  if (!is_in_valid_space(bvh, &s_player.capsule))
+  if (bvh && !is_in_valid_space(bvh, &s_player.capsule))
     ensure_in_valid_space(bvh, &s_player.capsule);
 }
 
@@ -597,10 +597,13 @@ player_update(float delta_time)
     update_vertical_velocity(delta_time);
 
   displacement = get_world_relative_velocity(delta_time);
-  flags = handle_collision_detection(displacement);
+  if (s_player.bvh) {
+    flags = handle_collision_detection(displacement);
 
-  if (!is_in_valid_space(s_player.bvh, &s_player.capsule))
-    add_debug_text_to_frame("NOT IN VALID SPACE", red, 200.f, 20.f);
+    if (!is_in_valid_space(s_player.bvh, &s_player.capsule))
+      add_debug_text_to_frame("NOT IN VALID SPACE", red, 200.f, 20.f);
+  } else
+    add_set_v3f(&s_player.capsule.center, &displacement);
 
   // set the camera position to follow the capsule
   s_player.camera->position = s_player.capsule.center;
@@ -621,6 +624,7 @@ player_update(float delta_time)
 
   // reset the vertical velocity if we collide with a ceiling
   if (
+    s_player.bvh &&
     !s_player.is_flying &&
     (flags & COLLIDED_CEILING_FLAG) == COLLIDED_CEILING_FLAG &&
     s_player.velocity.data[1] > 0.f)

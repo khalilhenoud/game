@@ -21,6 +21,8 @@
 #include <entity/runtime/font.h>
 #include <entity/runtime/font_utils.h>
 #include <entity/scene/camera.h>
+#include <entity/scene/node.h>
+#include <entity/scene/light.h>
 #include <entity/scene/scene.h>
 #include <entity/spatial/bvh.h>
 #include <library/framerate_controller/framerate_controller.h>
@@ -43,6 +45,59 @@ static uint32_t font_image_id;
 static bvh_t* bvh;
 
 void
+create_default_camera(scene_t *scene)
+{
+  if (scene->camera_repo.size)
+    return;
+
+  {
+    node_t *node = NULL;
+    cvector_resize(&scene->camera_repo, 1);
+    camera = cvector_as(&scene->camera_repo, 0, camera_t);
+    camera->position.data[0] =
+    camera->position.data[1] =
+    camera->position.data[2] = 0.f;
+
+    // transform the camera to y being up.
+    node = cvector_as(&scene->node_repo, 0, node_t);
+    mult_set_m4f_p3f(
+      &node->transform,
+      &camera->position);
+    camera->lookat_direction.data[0] =
+    camera->lookat_direction.data[1] = 0.f;
+    camera->lookat_direction.data[2] = -1.f;
+    camera->up_vector.data[0] =
+    camera->up_vector.data[2] = 0.f;
+    camera->up_vector.data[1] = 1.f;
+  }
+}
+
+void
+create_default_light(
+  scene_t *scene,
+  const allocator_t *allocator)
+{
+  if (scene->light_repo.size)
+    return;
+
+  {
+    light_t *light = NULL;
+    cvector_resize(&scene->light_repo, 1);
+    light = cvector_as(&scene->light_repo, 0, light_t);
+    cstring_setup(&light->name, "test", allocator);
+    vector3f_set_3f(&light->position, 0.f, 200.f, 0.f);
+    vector3f_set_3f(&light->direction, -1.f, -1.f, -1.f);
+    normalize_set_v3f(&light->direction);
+    vector3f_set_3f(&light->up, 0.f, 0.f, 1.f);
+    light->diffuse.data[0] = light->diffuse.data[1] = light->diffuse.data[2] =
+    light->diffuse.data[3] = 1.f;
+    light->specular = light->diffuse;
+    light->ambient = light->diffuse;
+    light->type = LIGHT_TYPE_DIRECTIONAL;
+  }
+}
+
+void
 load_level(
   const level_context_t context,
   const allocator_t *allocator)
@@ -51,18 +106,21 @@ load_level(
   sprintf(room, "rooms\\%s", context.level);
   scene = load_scene(context.data_set, room, context.level, allocator);
 
+  create_default_camera(scene);
+  create_default_light(scene, allocator);
+
   scene_render_data = load_scene_render_data(scene, allocator);
   prep_packaged_render_data(
     context.data_set, room, scene_render_data, allocator);
 
-  // guaranteed to exist, same with the font.
   camera = cvector_as(&scene_render_data->camera_data, 0, camera_t);
 
   font = cvector_as(&scene_render_data->font_data.fonts, 0, font_runtime_t);
   font_image_id = *cvector_as(
     &scene_render_data->font_data.texture_ids, 0, uint32_t);
 
-  bvh = cvector_as(&scene->bvh_repo, 0, bvh_t);
+  if (scene->bvh_repo.size)
+    bvh = cvector_as(&scene->bvh_repo, 0, bvh_t);
 
   exit_level = 0;
   disable_input = 0;
