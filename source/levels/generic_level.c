@@ -121,6 +121,8 @@ load_level(
 
   if (scene->bvh_repo.size)
     bvh = cvector_as(&scene->bvh_repo, 0, bvh_t);
+  else
+    bvh = NULL;
 
   exit_level = 0;
   disable_input = 0;
