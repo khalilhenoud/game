@@ -11,38 +11,50 @@
 #include <assert.h>
 #include <game/debug/text.h>
 #include <game/input/input.h>
-#include <game/levels/load_scene.h>
-#include <game/rendering/render_data.h>
+#include <game/levels/utils.h>
+#include <game/rendering/load_font.h>
+#include <game/rendering/load_image.h>
 #include <entity/level/level.h>
-#include <entity/mesh/color.h>
 #include <entity/runtime/font.h>
 #include <entity/runtime/font_utils.h>
-#include <entity/scene/scene.h>
+#include <entity/runtime/texture.h>
+#include <entity/runtime/texture_utils.h>
 #include <library/filesystem/filesystem.h>
 #include <library/framerate_controller/framerate_controller.h>
 #include <renderer/pipeline.h>
 #include <renderer/renderer_opengl.h>
 
-#define KEY_EXIT_LEVEL           '0'
-
 
 static framerate_controller_t *controller;
 static int32_t exit_room_select = -1;
-static color_rgba_t scene_color = { 0.2f, 0.2f, 0.2f, 1.f};
 static pipeline_t pipeline;
-static scene_t* scene;
-static packaged_scene_render_data_t* scene_render_data;
-static font_runtime_t* font;
-static uint32_t font_image_id;
 static dir_entries_t rooms;
+static texture_runtime_t texture_runtime;
+static uint32_t texture_id;
+static font_runtime_t font_runtime;
 
 static
 void
-load_rooms(const char* dataset)
+load_rooms(const char *dataset)
 {
   char directory[260];
   sprintf(directory, "%srooms\\*", dataset);
   get_subdirectories(directory, &rooms);
+}
+
+// ...flow.com/questions/12943164/replacement-for-gluperspective-with-glfrustrum
+static
+void
+setup_projection(
+  const level_context_t context,
+  pipeline_t *pipeline)
+{
+  float znear = 0.1f, zfar = 4000.f;
+  float aspect = (float)context.viewport.width / context.viewport.height;
+  float fh = (float)tan((double)60.f / 2.f / 180.f * K_PI) * znear;
+  float fw = fh * aspect;
+  set_perspective(pipeline, -fw, fw, -fh, fh, znear, zfar);
+  update_projection(pipeline);
 }
 
 void
@@ -50,43 +62,29 @@ load_room_select(
   const level_context_t context,
   const allocator_t *allocator)
 {
-  char room[256] = {0};
-  sprintf(room, "rooms\\%s", context.level);
+  float view_width = (float)context.viewport.width;
+  float view_height = (float)context.viewport.height;
 
-  scene = load_scene(
-    context.data_set,
-    room,
-    context.level,
-    allocator);
-
-  // load the scene render data.
-  scene_render_data = load_scene_render_data(scene, allocator);
-  prep_packaged_render_data(
-    context.data_set, room, scene_render_data, allocator);
-
-  // need to load the images required by the scene.
-  font = cvector_as(&scene_render_data->font_data.fonts, 0, font_runtime_t);
-  font_image_id = *cvector_as(
-    &scene_render_data->font_data.texture_ids, 0, uint32_t);
+  populate_default_font(&font_runtime.font, allocator);
+  load_font_inplace(
+    context.data_set, &font_runtime.font, &font_runtime, allocator);
+  cstring_setup(
+    &texture_runtime.texture.path, font_runtime.font.image_file.str, allocator);
+  load_image_buffer(context.data_set, &texture_runtime, allocator);
+  texture_id = upload_to_gpu(
+    texture_runtime.texture.path.str,
+    texture_runtime.buffer.data,
+    texture_runtime.width,
+    texture_runtime.height,
+    (renderer_image_format_t)texture_runtime.format);
 
   load_rooms(context.data_set);
   exit_room_select = -1;
 
   pipeline_set_default(&pipeline);
-  set_viewport(
-    &pipeline, 0.f, 0.f,
-    (float)context.viewport.width, (float)context.viewport.height);
+  set_viewport(&pipeline, 0.f, 0.f, view_width, view_height);
   update_viewport(&pipeline);
-
-  {
-    // "http://stackoverflow.com/questions/12943164/replacement-for-gluperspective-with-glfrustrum"
-    float znear = 0.1f, zfar = 4000.f;
-    float aspect = (float)context.viewport.width / context.viewport.height;
-    float fh = (float)tan((double)60.f / 2.f / 180.f * K_PI) * znear;
-    float fw = fh * aspect;
-    set_perspective(&pipeline, -fw, fw, -fh, fh, znear, zfar);
-    update_projection(&pipeline);
-  }
+  setup_projection(context, &pipeline);
 
   show_mouse_cursor(0);
 
@@ -116,8 +114,8 @@ update_room_select(const allocator_t* allocator)
     }
 
     render_text_to_screen(
-      font,
-      font_image_id,
+      &font_runtime,
+      texture_id,
       &pipeline,
       text,
       used,
@@ -143,8 +141,9 @@ void
 unload_room_select(const allocator_t* allocator)
 {
   controller_free(controller, allocator);
-  scene_free(scene, allocator);
-  cleanup_packaged_render_data(scene_render_data, allocator);
+  free_font_runtime_internal(&font_runtime, allocator);
+  free_texture_runtime_internal(&texture_runtime, allocator);
+  evict_from_gpu(texture_id);
 }
 
 void

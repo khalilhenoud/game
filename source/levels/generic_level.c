@@ -1,25 +1,29 @@
 /**
- * @file level1.c
+ * @file generic_level.c
  * @author khalilhenoud@gmail.com
  * @brief
  * @version 0.1
- * @date 2024-01-06
+ * @date 2026-01-27
  *
- * @copyright Copyright (c) 2024
+ * @copyright Copyright (c) 2026
  *
  */
 #include <assert.h>
 #include <game/debug/flags.h>
 #include <game/debug/text.h>
 #include <game/input/input.h>
-#include <game/levels/load_scene.h>
+#include <game/levels/utils.h>
 #include <game/logic/player.h>
 #include <game/rendering/render_data.h>
 #include <entity/level/level.h>
 #include <entity/mesh/color.h>
+#include <entity/mesh/mesh.h>
 #include <entity/mesh/mesh_utils.h>
+#include <entity/mesh/skinned_mesh.h>
 #include <entity/runtime/font.h>
 #include <entity/runtime/font_utils.h>
+#include <entity/scene/animation.h>
+#include <entity/scene/animation_utils.h>
 #include <entity/scene/camera.h>
 #include <entity/scene/node.h>
 #include <entity/scene/light.h>
@@ -43,57 +47,25 @@ static packaged_scene_render_data_t* scene_render_data;
 static font_runtime_t* font;
 static uint32_t font_image_id;
 static bvh_t* bvh;
+static anim_sequence_t* anim_sq;
 
-void
-create_default_camera(scene_t *scene)
-{
-  if (scene->camera_repo.size)
-    return;
-
-  {
-    node_t *node = NULL;
-    cvector_resize(&scene->camera_repo, 1);
-    camera = cvector_as(&scene->camera_repo, 0, camera_t);
-    camera->position.data[0] =
-    camera->position.data[1] =
-    camera->position.data[2] = 0.f;
-
-    // transform the camera to y being up.
-    node = cvector_as(&scene->node_repo, 0, node_t);
-    mult_set_m4f_p3f(
-      &node->transform,
-      &camera->position);
-    camera->lookat_direction.data[0] =
-    camera->lookat_direction.data[1] = 0.f;
-    camera->lookat_direction.data[2] = -1.f;
-    camera->up_vector.data[0] =
-    camera->up_vector.data[2] = 0.f;
-    camera->up_vector.data[1] = 1.f;
-  }
-}
-
-void
-create_default_light(
+// TODO: tmp, you can remove this function once refactoring comes into play.
+// this returns the first skinned_mesh, animation combo for testing.
+anim_sequence_t*
+get_anim_sequence(
   scene_t *scene,
   const allocator_t *allocator)
 {
-  if (scene->light_repo.size)
-    return;
+  assert(scene && allocator);
+
+  if (!scene->animation_repo.size || !scene->skinned_mesh_repo.size)
+    return NULL;
 
   {
-    light_t *light = NULL;
-    cvector_resize(&scene->light_repo, 1);
-    light = cvector_as(&scene->light_repo, 0, light_t);
-    cstring_setup(&light->name, "test", allocator);
-    vector3f_set_3f(&light->position, 0.f, 200.f, 0.f);
-    vector3f_set_3f(&light->direction, -1.f, -1.f, -1.f);
-    normalize_set_v3f(&light->direction);
-    vector3f_set_3f(&light->up, 0.f, 0.f, 1.f);
-    light->diffuse.data[0] = light->diffuse.data[1] = light->diffuse.data[2] =
-    light->diffuse.data[3] = 1.f;
-    light->specular = light->diffuse;
-    light->ambient = light->diffuse;
-    light->type = LIGHT_TYPE_DIRECTIONAL;
+    animation_t *animation = cvector_as(&scene->animation_repo, 0, animation_t);
+    skinned_mesh_t *skinned_mesh = cvector_as(
+      &scene->skinned_mesh_repo, 0, skinned_mesh_t);
+    return play_anim(animation, skinned_mesh, allocator);
   }
 }
 
@@ -106,7 +78,7 @@ load_level(
   sprintf(room, "rooms\\%s", context.level);
   scene = load_scene(context.data_set, room, context.level, allocator);
 
-  create_default_camera(scene);
+  create_default_camera(scene, camera);
   create_default_light(scene, allocator);
 
   scene_render_data = load_scene_render_data(scene, allocator);
@@ -123,6 +95,8 @@ load_level(
     bvh = cvector_as(&scene->bvh_repo, 0, bvh_t);
   else
     bvh = NULL;
+
+  anim_sq = get_anim_sequence(scene, allocator);
 
   exit_level = 0;
   disable_input = 0;
@@ -162,6 +136,24 @@ update_level(const allocator_t* allocator)
 
   input_update();
   clear_color_and_depth_buffers();
+
+  // TMP: remove once testing is done.
+  if (anim_sq) {
+    update_anim(anim_sq, dt_seconds);
+
+    {
+      // blit the skinned_mesh vertices into the scene_render_data skinned mesh.
+      mesh_render_data_t *render_data = cvector_as(
+        &scene_render_data->skinned_mesh_data.skinned_mesh_render_data,
+        0,
+        mesh_render_data_t);
+
+      mesh_t *mesh = get_anim_mesh(anim_sq);
+      uint32_t total_count = render_data->vertex_count * 3;
+      memcpy(render_data->vertices, mesh->vertices.data, total_count);
+      memcpy(render_data->normals, mesh->normals.data, total_count);
+    }
+  }
 
   render_packaged_scene_data(scene_render_data, &pipeline, camera);
 
@@ -229,6 +221,9 @@ unload_level(const allocator_t* allocator)
   controller_free(controller, allocator);
   scene_free(scene, allocator);
   cleanup_packaged_render_data(scene_render_data, allocator);
+
+  if (anim_sq)
+    stop_anim(anim_sq);
 }
 
 uint32_t

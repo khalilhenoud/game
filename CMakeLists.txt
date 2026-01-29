@@ -80,7 +80,7 @@ add_library(${PROJECT_NAME} SHARED
       ./source/debug/flags.c
       ./source/levels/generic_level.c
       ./source/levels/room_select.c
-      ./source/levels/load_scene.c
+      ./source/levels/utils.c
       ./source/input/input.c
       ./source/game.c
       ./include/game/internal/module.h)
