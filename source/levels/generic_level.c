@@ -101,24 +101,8 @@ load_level(
   exit_level = 0;
   disable_input = 0;
 
-  pipeline_set_default(&pipeline);
-  set_viewport(
-    &pipeline, 0.f, 0.f,
-    (float)context.viewport.width, (float)context.viewport.height);
-  update_viewport(&pipeline);
-
-  {
-    // "http://stackoverflow.com/questions/12943164/replacement-for-gluperspective-with-glfrustrum"
-    float znear = 0.1f, zfar = 4000.f;
-    float aspect = (float)context.viewport.width / context.viewport.height;
-    float fh = (float)tan((double)60.f / 2.f / 180.f * K_PI) * znear;
-    float fw = fh * aspect;
-    set_perspective(&pipeline, -fw, fw, -fh, fh, znear, zfar);
-    update_projection(&pipeline);
-  }
-
+  setup_view_projection_pipeline(&context, &pipeline);
   show_mouse_cursor(0);
-
   controller = controller_allocate(allocator, 60, 1u);
 
   player_init(

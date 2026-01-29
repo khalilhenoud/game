@@ -9,19 +9,22 @@
  *
  */
 #include <assert.h>
+#include <math.h>
 #include <stdint.h>
 #include <string.h>
 #include <game/levels/utils.h>
+#include <entity/level/level.h>
+#include <entity/misc/font.h>
 #include <entity/scene/camera.h>
 #include <entity/scene/light.h>
 #include <entity/scene/node.h>
 #include <entity/scene/scene.h>
-#include <entity/misc/font.h>
 #include <library/allocator/allocator.h>
 #include <library/containers/cvector.h>
 #include <library/filesystem/io.h>
 #include <library/streams/binary_stream.h>
 #include <library/string/cstring.h>
+#include <renderer/pipeline.h>
 
 
 scene_t*
@@ -125,4 +128,23 @@ create_default_light(
     light->ambient = light->diffuse;
     light->type = LIGHT_TYPE_DIRECTIONAL;
   }
+}
+
+// "http://stackoverflow.com/questions/12943164/replacement-for-gluperspective-with-glfrustrum"
+void
+setup_view_projection_pipeline(
+  const level_context_t *context,
+  pipeline_t *pipeline)
+{
+  float view_width = (float)context->viewport.width;
+  float view_height = (float)context->viewport.height;
+  float aspect = view_width / view_height;
+  float znear = 0.1f, zfar = 4000.f;
+  float fh = (float)tan((double)60.f / 2.f / 180.f * K_PI) * znear;
+  float fw = fh * aspect;
+  pipeline_set_default(pipeline);
+  set_viewport(pipeline, 0.f, 0.f, view_width, view_height);
+  update_viewport(pipeline);
+  set_perspective(pipeline, -fw, fw, -fh, fh, znear, zfar);
+  update_projection(pipeline);
 }

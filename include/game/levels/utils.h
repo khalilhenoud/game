@@ -23,6 +23,8 @@ typedef struct scene_t scene_t;
 typedef struct allocator_t allocator_t;
 typedef struct font_t font_t;
 typedef struct camera_t camera_t;
+typedef struct level_context_t level_context_t;
+typedef struct pipeline_t pipeline_t;
 
 scene_t*
 load_scene(
@@ -41,6 +43,11 @@ void
 create_default_light(
   scene_t *scene,
   const allocator_t *allocator);
+
+void
+setup_view_projection_pipeline(
+  const level_context_t *context,
+  pipeline_t *pipeline);
 
 #ifdef __cplusplus
 }

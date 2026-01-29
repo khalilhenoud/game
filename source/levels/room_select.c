@@ -25,6 +25,9 @@
 #include <renderer/renderer_opengl.h>
 
 
+void
+set_level_to_load(const char *source);
+
 static framerate_controller_t *controller;
 static int32_t exit_room_select = -1;
 static pipeline_t pipeline;
@@ -42,29 +45,12 @@ load_rooms(const char *dataset)
   get_subdirectories(directory, &rooms);
 }
 
-// ...flow.com/questions/12943164/replacement-for-gluperspective-with-glfrustrum
 static
 void
-setup_projection(
-  const level_context_t context,
-  pipeline_t *pipeline)
-{
-  float znear = 0.1f, zfar = 4000.f;
-  float aspect = (float)context.viewport.width / context.viewport.height;
-  float fh = (float)tan((double)60.f / 2.f / 180.f * K_PI) * znear;
-  float fw = fh * aspect;
-  set_perspective(pipeline, -fw, fw, -fh, fh, znear, zfar);
-  update_projection(pipeline);
-}
-
-void
-load_room_select(
+load_font_data(
   const level_context_t context,
   const allocator_t *allocator)
 {
-  float view_width = (float)context.viewport.width;
-  float view_height = (float)context.viewport.height;
-
   populate_default_font(&font_runtime.font, allocator);
   load_font_inplace(
     context.data_set, &font_runtime.font, &font_runtime, allocator);
@@ -77,25 +63,36 @@ load_room_select(
     texture_runtime.width,
     texture_runtime.height,
     (renderer_image_format_t)texture_runtime.format);
+}
+
+static
+void
+unload_font_data(const allocator_t* allocator)
+{
+  free_font_runtime_internal(&font_runtime, allocator);
+  free_texture_runtime_internal(&texture_runtime, allocator);
+  evict_from_gpu(texture_id);
+}
+
+void
+load_room_select(
+  const level_context_t context,
+  const allocator_t *allocator)
+{
+  load_font_data(context, allocator);
+  setup_view_projection_pipeline(&context, &pipeline);
+  show_mouse_cursor(0);
+  controller = controller_allocate(allocator, 60, 1u);
 
   load_rooms(context.data_set);
   exit_room_select = -1;
-
-  pipeline_set_default(&pipeline);
-  set_viewport(&pipeline, 0.f, 0.f, view_width, view_height);
-  update_viewport(&pipeline);
-  setup_projection(context, &pipeline);
-
-  show_mouse_cursor(0);
-
-  controller = controller_allocate(allocator, 60, 1u);
 }
 
 void
 update_room_select(const allocator_t* allocator)
 {
-  uint64_t frame_rate = (uint64_t)controller_end(controller);
-  float dt_seconds = (float)controller_start(controller);
+  controller_end(controller);
+  controller_start(controller);
 
   input_update();
   clear_color_and_depth_buffers();
@@ -141,13 +138,8 @@ void
 unload_room_select(const allocator_t* allocator)
 {
   controller_free(controller, allocator);
-  free_font_runtime_internal(&font_runtime, allocator);
-  free_texture_runtime_internal(&texture_runtime, allocator);
-  evict_from_gpu(texture_id);
+  unload_font_data(allocator);
 }
-
-void
-set_level_to_load(const char* source);
 
 uint32_t
 should_unload_room_select(void)
