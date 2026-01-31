@@ -19,12 +19,13 @@ extern "C" {
 #include <entity/mesh/color.h>
 
 
-typedef struct scene_t scene_t;
 typedef struct allocator_t allocator_t;
-typedef struct font_t font_t;
 typedef struct camera_t camera_t;
+typedef struct font_t font_t;
+typedef struct font_runtime_t font_runtime_t;
 typedef struct level_context_t level_context_t;
 typedef struct pipeline_t pipeline_t;
+typedef struct scene_t scene_t;
 
 scene_t*
 load_scene(
@@ -48,6 +49,15 @@ void
 setup_view_projection_pipeline(
   const level_context_t *context,
   pipeline_t *pipeline);
+
+void
+render_basic_controls(
+  font_runtime_t *font,
+  uint32_t font_image_id,
+  pipeline_t *pipeline,
+  float dt_seconds,
+  uint64_t frame_rate,
+  int32_t enabled);
 
 #ifdef __cplusplus
 }

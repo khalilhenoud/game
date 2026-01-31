@@ -10,6 +10,7 @@
  */
 #include <game/game.h>
 #include <game/input/input.h>
+#include <game/levels/anim_preview.h>
 #include <game/levels/generic_level.h>
 #include <game/levels/room_select.h>
 #include <game/memory_tracking/memory_tracking.h>
@@ -26,17 +27,19 @@ static int32_t viewport_width;
 static int32_t viewport_height;
 static const char* data_set;
 
-level_t level;
-allocator_t allocator;
-window_data_t window_data;
+static level_t level;
+static allocator_t allocator;
+static window_data_t window_data;
 
-char to_load[256];
+static char to_load[256];
+static uint32_t level_option;
 
 void
-set_level_to_load(const char* source)
+set_level_to_load(const char* source, uint32_t option)
 {
   memset(to_load, 0, sizeof(to_load));
   memcpy(to_load, source, strlen(source));
+  level_option = option;
 }
 
 static
@@ -59,8 +62,10 @@ construct_level()
 {
   if (in_level_select)
     construct_level_selector(&level);
-  else
+  else if (level_option == 0)
     construct_generic_level(&level);
+  else if (level_option == 1)
+    construct_anim_preview_level(&level);
 }
 
 static

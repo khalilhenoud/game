@@ -78,6 +78,7 @@ add_library(${PROJECT_NAME} SHARED
       ./source/debug/text.c
       ./source/debug/face.c
       ./source/debug/flags.c
+      ./source/levels/anim_preview.c
       ./source/levels/generic_level.c
       ./source/levels/room_select.c
       ./source/levels/utils.c

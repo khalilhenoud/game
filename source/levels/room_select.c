@@ -24,17 +24,24 @@
 #include <renderer/pipeline.h>
 #include <renderer/renderer_opengl.h>
 
+#define ARROW_UP            0x26
+#define ARROW_DOWN          0x28
+#define SPACE               0x20
+#define KEY_K               0x4B
+
 
 void
-set_level_to_load(const char *source);
+set_level_to_load(const char *source, uint32_t option);
 
 static framerate_controller_t *controller;
 static int32_t exit_room_select = -1;
+static uint32_t exit_room_option = 0;
 static pipeline_t pipeline;
 static dir_entries_t rooms;
 static texture_runtime_t texture_runtime;
 static uint32_t texture_id;
 static font_runtime_t font_runtime;
+static const char *data_set;
 
 static
 void
@@ -67,7 +74,7 @@ load_font_data(
 
 static
 void
-unload_font_data(const allocator_t* allocator)
+unload_font_data(const allocator_t *allocator)
 {
   free_font_runtime_internal(&font_runtime, allocator);
   free_texture_runtime_internal(&texture_runtime, allocator);
@@ -79,17 +86,96 @@ load_room_select(
   const level_context_t context,
   const allocator_t *allocator)
 {
+  data_set = context.data_set;
+
   load_font_data(context, allocator);
   setup_view_projection_pipeline(&context, &pipeline);
   show_mouse_cursor(0);
   controller = controller_allocate(allocator, 60, 1u);
 
-  load_rooms(context.data_set);
+  load_rooms(data_set);
   exit_room_select = -1;
 }
 
+static
 void
-update_room_select(const allocator_t* allocator)
+room_selection()
+{
+  static int32_t index = 0;
+  char name[1024];
+  const char *text[1];
+  uint32_t used = rooms.used;
+
+  // small intro text
+  sprintf(name, "%s", "up down to navigate. space, k to select");
+  text[0] = name;
+  render_text_to_screen(
+    &font_runtime, texture_id, &pipeline, text, 1, white, 5.f, 0.f);
+  sprintf(name, "%s", "-------------------------------------");
+  text[0] = name;
+  render_text_to_screen(
+    &font_runtime, texture_id, &pipeline, text, 1, white, 5.f, 10.f);
+
+  for (uint32_t i = 0, j = 0; i < rooms.used; ++i) {
+    if (strcmp(rooms.dir_names[i], "room_select") == 0)
+      continue;
+    else
+      sprintf(name, "%s", rooms.dir_names[i]);
+    text[0] = name;
+
+    render_text_to_screen(
+      &font_runtime,
+      texture_id,
+      &pipeline,
+      text,
+      1,
+      i == index ? green : white,
+      15.f, j * 20.f + 30.f);
+
+    if (i == index) {
+      sprintf(name, "%s", ">");
+      text[0] = name;
+      render_text_to_screen(
+        &font_runtime,
+        texture_id,
+        &pipeline,
+        text,
+        1,
+        green,
+        5.f, j * 20.f + 30.f);
+    }
+
+    j++;
+  }
+
+  if (is_key_triggered(ARROW_UP)) {
+    --index;
+    if (!strcmp(rooms.dir_names[index], "room_select"))
+      --index;
+  }
+
+  if (is_key_triggered(ARROW_DOWN)) {
+    ++index;
+    if (!strcmp(rooms.dir_names[index], "room_select"))
+      ++index;
+  }
+
+  index = index < 0 ? 0 : index;
+  index = index > (rooms.used - 1) ? (rooms.used - 1) : index;
+
+  if (is_key_triggered(SPACE)) {
+    if (strcmp(rooms.dir_names[index], "room_select") != 0)
+      exit_room_select = index;
+      exit_room_option = 0;
+  } else if (is_key_triggered(KEY_K)) {
+    if (strcmp(rooms.dir_names[index], "room_select") != 0)
+      exit_room_select = index;
+      exit_room_option = 1;
+  }
+}
+
+void
+update_room_select(const allocator_t *allocator)
 {
   controller_end(controller);
   controller_start(controller);
@@ -97,45 +183,13 @@ update_room_select(const allocator_t* allocator)
   input_update();
   clear_color_and_depth_buffers();
 
-  {
-    char rooms_names[1024][260];
-    const char* text[1024];
-    uint32_t used = rooms.used;
-
-    for (uint32_t i = 0; i < rooms.used; ++i) {
-      if (strcmp(rooms.dir_names[i], "room_select") == 0)
-        sprintf(rooms_names[i], "[%s] %s", "-", rooms.dir_names[i]);
-      else
-        sprintf(rooms_names[i], "[%u] %s", (i + 1), rooms.dir_names[i]);
-      text[i] = rooms_names[i];
-    }
-
-    render_text_to_screen(
-      &font_runtime,
-      texture_id,
-      &pipeline,
-      text,
-      used,
-      white,
-      20.f, 0.f);
-  }
-
-  // only support 9 levels for now.
-  for (int32_t i = 0; i < 9; ++i) {
-    if (
-      is_key_triggered('1' + i) &&
-      i < (int32_t)rooms.used &&
-      strcmp(rooms.dir_names[i], "room_select") != 0) {
-        exit_room_select = i;
-        break;
-      }
-  }
+  room_selection();
 
   flush_operations();
 }
 
 void
-unload_room_select(const allocator_t* allocator)
+unload_room_select(const allocator_t *allocator)
 {
   controller_free(controller, allocator);
   unload_font_data(allocator);
@@ -147,13 +201,13 @@ should_unload_room_select(void)
   if (exit_room_select == -1)
     return 0;
   else {
-    set_level_to_load(rooms.dir_names[exit_room_select]);
+    set_level_to_load(rooms.dir_names[exit_room_select], exit_room_option);
     return 1;
   }
 }
 
 void
-construct_level_selector(level_t* level)
+construct_level_selector(level_t *level)
 {
   assert(level);
 
