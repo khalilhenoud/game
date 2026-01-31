@@ -69,7 +69,6 @@ load_level(
 
   setup_view_projection_pipeline(&context, &pipeline);
   show_mouse_cursor(0);
-  controller = controller_allocate(allocator, 60, 1u);
 
   player_init(
     scene->metadata.player_start,
@@ -77,6 +76,7 @@ load_level(
     camera,
     bvh);
 
+  controller = controller_allocate(allocator, 60, 1u);
   exit_level = 0;
   disable_input = 0;
 }
@@ -92,21 +92,18 @@ update_level(const allocator_t* allocator)
   clear_color_and_depth_buffers();
   render_packaged_scene_data(render_data, &pipeline, camera);
 
-  {
-    // disable/enable input with '~' key.
-    if (is_key_triggered(TILDE)) {
-      disable_input = !disable_input;
-      show_mouse_cursor((int32_t)disable_input);
-    }
-
-    if (!disable_input) {
-      update_debug_flags();
-      player_update(dt);
-      draw_debug_text_frame(&pipeline, font, font_image_id);
-      draw_debug_face_frame(&pipeline, g_debug_flags.disable_depth_debug);
-    } else if (is_key_triggered(KEY_EXIT_LEVEL))
-      exit_level = 1;
+  if (is_key_triggered(TILDE)) {
+    disable_input = !disable_input;
+    show_mouse_cursor((int32_t)disable_input);
   }
+
+  if (!disable_input) {
+    update_debug_flags();
+    player_update(dt);
+    draw_debug_text_frame(&pipeline, font, font_image_id);
+    draw_debug_face_frame(&pipeline, g_debug_flags.disable_depth_debug);
+  } else if (is_key_triggered(KEY_EXIT_LEVEL))
+    exit_level = 1;
 
   render_basic_controls(font, font_image_id, &pipeline, dt, fps, disable_input);
   flush_operations();

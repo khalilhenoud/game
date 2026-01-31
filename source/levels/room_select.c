@@ -81,6 +81,7 @@ unload_font_data(const allocator_t *allocator)
   evict_from_gpu(texture_id);
 }
 
+static
 void
 load_room_select(
   const level_context_t context,
@@ -174,6 +175,7 @@ room_selection()
   }
 }
 
+static
 void
 update_room_select(const allocator_t *allocator)
 {
@@ -182,12 +184,11 @@ update_room_select(const allocator_t *allocator)
 
   input_update();
   clear_color_and_depth_buffers();
-
   room_selection();
-
   flush_operations();
 }
 
+static
 void
 unload_room_select(const allocator_t *allocator)
 {
@@ -195,6 +196,7 @@ unload_room_select(const allocator_t *allocator)
   unload_font_data(allocator);
 }
 
+static
 uint32_t
 should_unload_room_select(void)
 {
