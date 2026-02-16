@@ -70,6 +70,7 @@ add_library(${PROJECT_NAME} SHARED
       ./source/rendering/load_font.c
       ./source/rendering/load_image.c
       ./source/rendering/render_data.c
+      ./source/rendering/render.c
       ./source/logic/player.c
       ./source/logic/camera.c
       ./source/logic/collision_utils.c

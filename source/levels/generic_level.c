@@ -16,16 +16,9 @@
 #include <game/logic/player.h>
 #include <game/rendering/render_data.h>
 #include <entity/level/level.h>
-#include <entity/mesh/color.h>
-#include <entity/mesh/mesh.h>
-#include <entity/mesh/mesh_utils.h>
 #include <entity/runtime/font.h>
 #include <entity/runtime/font_utils.h>
-#include <entity/scene/animation.h>
-#include <entity/scene/animation_utils.h>
 #include <entity/scene/camera.h>
-#include <entity/scene/node.h>
-#include <entity/scene/light.h>
 #include <entity/scene/scene.h>
 #include <entity/spatial/bvh.h>
 #include <library/framerate_controller/framerate_controller.h>

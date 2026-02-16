@@ -9,23 +9,18 @@
  *
  */
 #include <assert.h>
-#include <game/debug/flags.h>
-#include <game/debug/text.h>
 #include <game/input/input.h>
 #include <game/levels/utils.h>
 #include <game/logic/camera.h>
-#include <game/rendering/render_data.h>
+#include <game/rendering/render.h>
 #include <entity/level/level.h>
-#include <entity/mesh/color.h>
-#include <entity/mesh/mesh.h>
-#include <entity/mesh/mesh_utils.h>
+#include <entity/mesh/material.h>
 #include <entity/mesh/skinned_mesh.h>
 #include <entity/runtime/font.h>
 #include <entity/runtime/font_utils.h>
 #include <entity/scene/animation.h>
 #include <entity/scene/animation_utils.h>
 #include <entity/scene/camera.h>
-#include <entity/scene/light.h>
 #include <entity/scene/scene.h>
 #include <library/framerate_controller/framerate_controller.h>
 #include <renderer/pipeline.h>
@@ -48,7 +43,6 @@ static int32_t disable_input;
 static pipeline_t pipeline;
 static camera_t* camera;
 static scene_t* scene;
-static packaged_scene_render_data_t* render_data;
 static font_runtime_t* font;
 static uint32_t font_image_id;
 static anim_sequence_t* anim_sq;
@@ -56,6 +50,8 @@ static vector3f velocity;
 static const float velocity_limit = 10.f;
 static const float acceleration = 5.f;
 static const float friction = 2.f;
+
+static scene_resources_t *scene_resources;
 
 // TODO: tmp, you can remove this function once refactoring comes into play.
 // this returns the first skinned_mesh, animation combo for testing.
@@ -79,6 +75,14 @@ get_anim_sequence(
 
 static
 void
+render_skinned_mesh(
+  scene_t *scene,
+  void *_skinned_mesh,
+  uint32_t texture_id,
+  pipeline_t *pipeline);
+
+static
+void
 load_level(
   const level_context_t context,
   const allocator_t *allocator)
@@ -89,12 +93,13 @@ load_level(
   create_default_camera(scene, camera);
   create_default_light(scene, allocator);
 
-  render_data = load_scene_render_data(scene, allocator);
-  prep_packaged_render_data(context.data_set, room, render_data, allocator);
-
-  camera = cvector_as(&render_data->camera_data, 0, camera_t);
-  font = cvector_as(&render_data->font_data.fonts, 0, font_runtime_t);
-  font_image_id = *cvector_as(&render_data->font_data.texture_ids, 0, uint32_t);
+  scene_resources = render_setup(context.data_set, room, scene, allocator);
+  register_render_callback(
+    get_type_id(skinned_mesh_t), render_skinned_mesh, scene_resources);
+  camera = cvector_as(&scene->camera_repo, 0, camera_t);
+  camera->position.data[2] += 200;
+  camera->position.data[1] += 100;
+  font = get_default_runtime_font(scene, scene_resources, &font_image_id);
 
   setup_view_projection_pipeline(&context, &pipeline);
   show_mouse_cursor(0);
@@ -226,27 +231,26 @@ update_level(const allocator_t* allocator)
   input_update();
   clear_color_and_depth_buffers();
 
-  // TMP: remove once testing is done.
-  if (anim_sq) {
-    update_anim(anim_sq, dt);
+  // // TMP: remove once testing is done.
+  // if (anim_sq) {
+  //   update_anim(anim_sq, dt);
 
-    {
-      // blit the skinned_mesh vertices into the render_data skinned mesh.
-      mesh_render_data_t *sk_render_data = cvector_as(
-        &render_data->skinned_mesh_data.skinned_mesh_render_data,
-        0,
-        mesh_render_data_t);
+  //   {
+  //     // blit the skinned_mesh vertices into the render_data skinned mesh.
+  //     mesh_render_data_t *sk_render_data = cvector_as(
+  //       &render_data->skinned_mesh_data.skinned_mesh_render_data,
+  //       0,
+  //       mesh_render_data_t);
 
-      mesh_t *mesh = get_anim_mesh(anim_sq);
-      uint32_t total_count = sk_render_data->vertex_count * 3;
-      memcpy(sk_render_data->vertices, mesh->vertices.data, total_count);
-      memcpy(sk_render_data->normals, mesh->normals.data, total_count);
-    }
-  }
+  //     mesh_t *mesh = get_anim_mesh(anim_sq);
+  //     uint32_t total_count = sk_render_data->vertex_count * 3;
+  //     memcpy(sk_render_data->vertices, mesh->vertices.data, total_count);
+  //     memcpy(sk_render_data->normals, mesh->normals.data, total_count);
+  //   }
+  // }
 
-  render_packaged_scene_data(render_data, &pipeline, camera);
+  render(scene, &pipeline, camera, scene_resources);
 
-  // disable/enable input with '~' key.
   if (is_key_triggered(TILDE)) {
     disable_input = !disable_input;
     show_mouse_cursor((int32_t)disable_input);
@@ -263,11 +267,97 @@ update_level(const allocator_t* allocator)
 
 static
 void
+render_mesh(
+  scene_t *scene,
+  mesh_t *mesh,
+  uint32_t texture_id,
+  pipeline_t *pipeline)
+{
+  mesh_render_data_t mesh_data;
+  mesh_data.vertices = mesh->vertices.data;
+  mesh_data.normals = mesh->normals.data;
+  mesh_data.uv_coords = mesh->uvs.data;
+  mesh_data.vertex_count = (mesh->vertices.size)/3;
+  mesh_data.indices = mesh->indices.data;
+  mesh_data.indices_count = mesh->indices.size;
+  if (mesh->materials.used) {
+    material_t *material = cvector_as(
+      &scene->material_repo, mesh->materials.indices[0], material_t);
+    size_t size = sizeof(mesh_data.ambient.data);
+    memcpy(mesh_data.ambient.data, material->ambient.data, size);
+    memcpy(mesh_data.specular.data, material->specular.data, size);
+    memcpy(mesh_data.diffuse.data, material->diffuse.data, size);
+  } else {
+    // set a default ambient color
+    mesh_data.ambient.data[0] =
+    mesh_data.ambient.data[1] = mesh_data.ambient.data[2] = 0.5f;
+    mesh_data.ambient.data[3] = 1.f;
+    // copy the ambient default color into the diffuse and specular
+    uint32_t size = sizeof(mesh_data.diffuse.data);
+    memcpy(mesh_data.diffuse.data, mesh_data.ambient.data, size);
+    memcpy(mesh_data.specular.data, mesh_data.ambient.data, size);
+  }
+  draw_meshes(&mesh_data, &texture_id, 1, pipeline);
+}
+
+static
+void
+render_bones(
+  skinned_mesh_t *skinned_mesh,
+  skel_node_t *parent,
+  matrix4f transform,
+  pipeline_t *pipeline)
+{
+  const color_t green = { 0.f, 1.f, 0.f, 1.f };
+  cvector_t *nodes = &skinned_mesh->skeleton.nodes;
+  float vertices[6];
+  point3f origin;
+  memset(&origin, 0, sizeof(point3f));
+  mult_set_m4f_p3f(&transform, &origin);
+  memcpy(vertices, origin.data, sizeof(float) * 3);
+
+  for (uint32_t i = 0; i < parent->skel_nodes.size; ++i) {
+    uint32_t index = *cvector_as(&parent->skel_nodes, i, uint32_t);
+    skel_node_t *child = cvector_as(nodes, index, skel_node_t);
+    matrix4f child_transform = mult_m4f(&transform, &child->transform);
+
+    point3f dest;
+    memset(&dest, 0, sizeof(point3f));
+    mult_set_m4f_p3f(&child_transform, &dest);
+    memcpy(vertices + 3, dest.data, sizeof(float) * 3);
+    draw_lines(vertices, 2, green, 2, pipeline);
+
+    render_bones(skinned_mesh, child, child_transform, pipeline);
+  }
+}
+
+static
+void
+render_skinned_mesh(
+  scene_t *scene,
+  void *_skinned_mesh,
+  uint32_t texture_id,
+  pipeline_t *pipeline)
+{
+  skinned_mesh_t *skinned_mesh = _skinned_mesh;
+  render_mesh(scene, &skinned_mesh->mesh, texture_id, pipeline);
+
+  disable_depth_test();
+  {
+    cvector_t *nodes = &skinned_mesh->skeleton.nodes;
+    skel_node_t *root = cvector_as(nodes, 0, skel_node_t);
+    render_bones(skinned_mesh, root, root->transform, pipeline);
+  }
+  enable_depth_test();
+}
+
+static
+void
 unload_level(const allocator_t* allocator)
 {
   controller_free(controller, allocator);
   scene_free(scene, allocator);
-  cleanup_packaged_render_data(render_data, allocator);
+  render_cleanup(scene_resources, allocator);
 
   if (anim_sq)
     stop_anim(anim_sq);

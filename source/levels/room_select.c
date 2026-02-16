@@ -30,18 +30,18 @@
 #define KEY_K               0x4B
 
 
-void
-set_level_to_load(const char *source, uint32_t option);
-
 static framerate_controller_t *controller;
 static int32_t exit_room_select = -1;
 static uint32_t exit_room_option = 0;
 static pipeline_t pipeline;
 static dir_entries_t rooms;
-static texture_runtime_t texture_runtime;
-static uint32_t texture_id;
-static font_runtime_t font_runtime;
+static texture_runtime_t texture;
+static uint32_t tex_id;
+static font_runtime_t font;
 static const char *data_set;
+
+void
+set_level_to_load(const char *source, uint32_t option);
 
 static
 void
@@ -58,27 +58,25 @@ load_font_data(
   const level_context_t context,
   const allocator_t *allocator)
 {
-  populate_default_font(&font_runtime.font, allocator);
-  load_font_inplace(
-    context.data_set, &font_runtime.font, &font_runtime, allocator);
-  cstring_setup(
-    &texture_runtime.texture.path, font_runtime.font.image_file.str, allocator);
-  load_image_buffer(context.data_set, &texture_runtime, allocator);
-  texture_id = upload_to_gpu(
-    texture_runtime.texture.path.str,
-    texture_runtime.buffer.data,
-    texture_runtime.width,
-    texture_runtime.height,
-    (renderer_image_format_t)texture_runtime.format);
+  populate_default_font(&font.font, allocator);
+  load_font_inplace(context.data_set, &font.font, &font, allocator);
+  cstring_setup(&texture.texture.path, font.font.image_file.str, allocator);
+  load_image_buffer(context.data_set, &texture, allocator);
+  tex_id = upload_to_gpu(
+    texture.texture.path.str,
+    texture.buffer.data,
+    texture.width,
+    texture.height,
+    (renderer_image_format_t)texture.format);
 }
 
 static
 void
 unload_font_data(const allocator_t *allocator)
 {
-  free_font_runtime_internal(&font_runtime, allocator);
-  free_texture_runtime_internal(&texture_runtime, allocator);
-  evict_from_gpu(texture_id);
+  free_font_runtime_internal(&font, allocator);
+  free_texture_runtime_internal(&texture, allocator);
+  evict_from_gpu(tex_id);
 }
 
 static
@@ -110,12 +108,10 @@ room_selection()
   // small intro text
   sprintf(name, "%s", "up down to navigate. space, k to select");
   text[0] = name;
-  render_text_to_screen(
-    &font_runtime, texture_id, &pipeline, text, 1, white, 5.f, 0.f);
+  render_text_to_screen(&font, tex_id, &pipeline, text, 1, white, 5.f, 0.f);
   sprintf(name, "%s", "-------------------------------------");
   text[0] = name;
-  render_text_to_screen(
-    &font_runtime, texture_id, &pipeline, text, 1, white, 5.f, 10.f);
+  render_text_to_screen(&font, tex_id, &pipeline, text, 1, white, 5.f, 10.f);
 
   for (uint32_t i = 0, j = 0; i < rooms.used; ++i) {
     if (strcmp(rooms.dir_names[i], "room_select") == 0)
@@ -125,8 +121,8 @@ room_selection()
     text[0] = name;
 
     render_text_to_screen(
-      &font_runtime,
-      texture_id,
+      &font,
+      tex_id,
       &pipeline,
       text,
       1,
@@ -137,8 +133,8 @@ room_selection()
       sprintf(name, "%s", ">");
       text[0] = name;
       render_text_to_screen(
-        &font_runtime,
-        texture_id,
+        &font,
+        tex_id,
         &pipeline,
         text,
         1,
