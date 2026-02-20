@@ -41,21 +41,21 @@ static framerate_controller_t *controller;
 static uint32_t exit_level = 0;
 static int32_t disable_input;
 static pipeline_t pipeline;
-static camera_t* camera;
-static scene_t* scene;
-static font_runtime_t* font;
+static camera_t *camera;
+static scene_t *scene;
+static scene_resources_t *scene_resources;
+static font_runtime_t *font;
 static uint32_t font_image_id;
-static anim_sequence_t* anim_sq;
+static anim_sequence_t *anim_sq;
 static vector3f velocity;
 static const float velocity_limit = 10.f;
 static const float acceleration = 5.f;
 static const float friction = 2.f;
 
-static scene_resources_t *scene_resources;
-
-// TODO: tmp, you can remove this function once refactoring comes into play.
-// this returns the first skinned_mesh, animation combo for testing.
-anim_sequence_t*
+// NOTE: for testing only, assumes one skeletal mesh and animation in scene, and
+// that they are tied together.
+static
+anim_sequence_t *
 get_anim_sequence(
   scene_t *scene,
   const allocator_t *allocator)
@@ -231,23 +231,9 @@ update_level(const allocator_t* allocator)
   input_update();
   clear_color_and_depth_buffers();
 
-  // // TMP: remove once testing is done.
-  // if (anim_sq) {
-  //   update_anim(anim_sq, dt);
-
-  //   {
-  //     // blit the skinned_mesh vertices into the render_data skinned mesh.
-  //     mesh_render_data_t *sk_render_data = cvector_as(
-  //       &render_data->skinned_mesh_data.skinned_mesh_render_data,
-  //       0,
-  //       mesh_render_data_t);
-
-  //     mesh_t *mesh = get_anim_mesh(anim_sq);
-  //     uint32_t total_count = sk_render_data->vertex_count * 3;
-  //     memcpy(sk_render_data->vertices, mesh->vertices.data, total_count);
-  //     memcpy(sk_render_data->normals, mesh->normals.data, total_count);
-  //   }
-  // }
+  // NOTE: testing purposes
+  if (anim_sq)
+    update_anim(anim_sq, dt);
 
   render(scene, &pipeline, camera, scene_resources);
 
@@ -304,7 +290,8 @@ static
 void
 render_bones(
   skinned_mesh_t *skinned_mesh,
-  skel_node_t *parent,
+  uint32_t node_index,
+  skel_node_t *node,
   matrix4f transform,
   pipeline_t *pipeline)
 {
@@ -316,10 +303,15 @@ render_bones(
   mult_set_m4f_p3f(&transform, &origin);
   memcpy(vertices, origin.data, sizeof(float) * 3);
 
-  for (uint32_t i = 0; i < parent->skel_nodes.size; ++i) {
-    uint32_t index = *cvector_as(&parent->skel_nodes, i, uint32_t);
+  for (uint32_t i = 0; i < node->skel_nodes.size; ++i) {
+    uint32_t index = *cvector_as(&node->skel_nodes, i, uint32_t);
     skel_node_t *child = cvector_as(nodes, index, skel_node_t);
+    #if 0
     matrix4f child_transform = mult_m4f(&transform, &child->transform);
+    #else
+    matrix4f child_transform = get_anim_bone_transform(anim_sq, index);
+    child_transform = mult_m4f(&transform, &child_transform);
+    #endif
 
     point3f dest;
     memset(&dest, 0, sizeof(point3f));
@@ -327,7 +319,7 @@ render_bones(
     memcpy(vertices + 3, dest.data, sizeof(float) * 3);
     draw_lines(vertices, 2, green, 2, pipeline);
 
-    render_bones(skinned_mesh, child, child_transform, pipeline);
+    render_bones(skinned_mesh, index, child, child_transform, pipeline);
   }
 }
 
@@ -346,7 +338,12 @@ render_skinned_mesh(
   {
     cvector_t *nodes = &skinned_mesh->skeleton.nodes;
     skel_node_t *root = cvector_as(nodes, 0, skel_node_t);
-    render_bones(skinned_mesh, root, root->transform, pipeline);
+    #if 0
+    render_bones(skinned_mesh, 0, root, root->transform, pipeline);
+    #else
+    render_bones(
+      skinned_mesh, 0, root, get_anim_bone_transform(anim_sq, 0), pipeline);
+    #endif
   }
   enable_depth_test();
 }
