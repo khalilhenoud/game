@@ -304,20 +304,16 @@ render_bones(
   memcpy(vertices, origin.data, sizeof(float) * 3);
 
   for (uint32_t i = 0; i < node->skel_nodes.size; ++i) {
+    point3f dest;
     uint32_t index = *cvector_as(&node->skel_nodes, i, uint32_t);
     skel_node_t *child = cvector_as(nodes, index, skel_node_t);
-    #if 0
-    matrix4f child_transform = mult_m4f(&transform, &child->transform);
-    #else
     matrix4f child_transform = get_anim_bone_transform(anim_sq, index);
     child_transform = mult_m4f(&transform, &child_transform);
-    #endif
 
-    point3f dest;
     memset(&dest, 0, sizeof(point3f));
     mult_set_m4f_p3f(&child_transform, &dest);
     memcpy(vertices + 3, dest.data, sizeof(float) * 3);
-    draw_lines(vertices, 2, green, 2, pipeline);
+    draw_lines(vertices, 2, green, 1, pipeline);
 
     render_bones(skinned_mesh, index, child, child_transform, pipeline);
   }
@@ -338,12 +334,8 @@ render_skinned_mesh(
   {
     cvector_t *nodes = &skinned_mesh->skeleton.nodes;
     skel_node_t *root = cvector_as(nodes, 0, skel_node_t);
-    #if 0
-    render_bones(skinned_mesh, 0, root, root->transform, pipeline);
-    #else
     render_bones(
       skinned_mesh, 0, root, get_anim_bone_transform(anim_sq, 0), pipeline);
-    #endif
   }
   enable_depth_test();
 }
