@@ -260,7 +260,7 @@ render_mesh(
   pipeline_t *pipeline)
 {
   mesh_render_data_t mesh_data;
-  mesh_data.vertices = mesh->vertices.data;
+  mesh_data.vertices = get_skin(anim_sq);
   mesh_data.normals = mesh->normals.data;
   mesh_data.uv_coords = mesh->uvs.data;
   mesh_data.vertex_count = (mesh->vertices.size)/3;
@@ -307,7 +307,7 @@ render_bones(
     point3f dest;
     uint32_t index = *cvector_as(&node->skel_nodes, i, uint32_t);
     skel_node_t *child = cvector_as(nodes, index, skel_node_t);
-    matrix4f child_transform = get_anim_bone_transform(anim_sq, index);
+    matrix4f child_transform = get_node_local_transform(anim_sq, index);
     child_transform = mult_m4f(&transform, &child_transform);
 
     memset(&dest, 0, sizeof(point3f));
@@ -335,7 +335,7 @@ render_skinned_mesh(
     cvector_t *nodes = &skinned_mesh->skeleton.nodes;
     skel_node_t *root = cvector_as(nodes, 0, skel_node_t);
     render_bones(
-      skinned_mesh, 0, root, get_anim_bone_transform(anim_sq, 0), pipeline);
+      skinned_mesh, 0, root, get_node_local_transform(anim_sq, 0), pipeline);
   }
   enable_depth_test();
 }
