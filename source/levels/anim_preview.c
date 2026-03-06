@@ -261,7 +261,7 @@ render_mesh(
 {
   mesh_render_data_t mesh_data;
   mesh_data.vertices = get_skin(anim_sq);
-  mesh_data.normals = mesh->normals.data;
+  mesh_data.normals = get_skin_normals(anim_sq);
   mesh_data.uv_coords = mesh->uvs.data;
   mesh_data.vertex_count = (mesh->vertices.size)/3;
   mesh_data.indices = mesh->indices.data;
