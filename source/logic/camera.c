@@ -126,7 +126,7 @@ update_orientation(
   // rotate the camera left and right
   matrix4f_rotation_y(&rotation_x, -cursor.delta_x * HORIZONTAL_SENSITIVITY);
   // rotate the camera up and down
-  matrix4f_set_axisangle(&axis_xz, &ortho_xz, TO_DEGREES(frame_dy));
+  matrix4f_set_axisangle(&axis_xz, &ortho_xz, frame_dy);
 
   // switching the rotations here makes no difference, why? because visually the
   // result is the same. Simulate it using your thumb and index.
