@@ -9,6 +9,7 @@
  *
  */
 #include <assert.h>
+#include <game/debug/text.h>
 #include <game/input/input.h>
 #include <game/levels/utils.h>
 #include <game/logic/camera.h>
@@ -27,19 +28,26 @@
 #include <renderer/renderer_opengl.h>
 
 #define TILDE   0xC0
-#define KEY_EXIT_LEVEL           '0'
+#define KEY_EXIT_LEVEL            '0'
 #define KEY_STRAFE_LEFT           'A'
 #define KEY_STRAFE_RIGHT          'D'
 #define KEY_MOVE_FWD              'W'
 #define KEY_MOVE_BACK             'S'
 #define KEY_MOVE_UP               'Q'
 #define KEY_MOVE_DOWN             'E'
+#define TOGGLE_SKELETON_RENDERING '1'
+#define SPEED_UP_ANIM             '5'
+#define SPEED_DOWN_ANIM           '4'
+#define TOGGLE_ROOT_MOTION        '9'
 #define REFERENCE_FRAME_TIME      0.033f
 
 
 static framerate_controller_t *controller;
 static uint32_t exit_level = 0;
-static int32_t disable_input;
+static int32_t disable_input = 0;
+static int32_t disable_skeleton_rendering = 1;
+static uint32_t root_motion = 1;
+static float anim_multiplier = 1.f;
 static pipeline_t pipeline;
 static camera_t *camera;
 static scene_t *scene;
@@ -108,6 +116,9 @@ load_level(
   anim_sq = get_anim_sequence(scene, allocator);
   exit_level = 0;
   disable_input = 0;
+  disable_skeleton_rendering = 1;
+  root_motion = 1;
+  anim_multiplier = 1.f;
   velocity.data[0] = velocity.data[1] = velocity.data[2] = 0.f;
 }
 
@@ -223,6 +234,30 @@ update(float delta_time)
 
 static
 void
+render_advanced_controls()
+{
+  if (disable_input)
+    return;
+
+  {
+    char array[200] = {0};
+    snprintf(array, 200, "[4/5] SLOWDOWN SPEED UP ANIM %.1f", anim_multiplier);
+    add_debug_text_to_frame(array, green, 0.f, 120.f);
+
+    add_debug_text_to_frame(
+      "[1] TOGGLE SKELETON RENDERING",
+      disable_skeleton_rendering ? red : green,
+      0.f, 140.f);
+    add_debug_text_to_frame(
+      "[9] TOGGLE ROOT MOTION",
+      root_motion ? green : red,
+      0.f, 160.f);
+    draw_debug_text_frame(&pipeline, font, font_image_id);
+  }
+}
+
+static
+void
 update_level(const allocator_t* allocator)
 {
   uint64_t fps = (uint64_t)controller_end(controller);
@@ -233,7 +268,7 @@ update_level(const allocator_t* allocator)
 
   // NOTE: testing purposes
   if (anim_sq)
-    update_anim(anim_sq, dt);
+    update_anim(anim_sq, dt * anim_multiplier, root_motion);
 
   render(scene, &pipeline, camera, scene_resources);
 
@@ -242,11 +277,30 @@ update_level(const allocator_t* allocator)
     show_mouse_cursor((int32_t)disable_input);
   }
 
+  if (is_key_triggered(TOGGLE_SKELETON_RENDERING))
+    disable_skeleton_rendering = !disable_skeleton_rendering;
+
+  if (is_key_pressed(SPEED_UP_ANIM)) {
+    anim_multiplier += 0.05f;
+    anim_multiplier = anim_multiplier > 2.f ? 2.f : anim_multiplier;
+  }
+
+  if (is_key_pressed(SPEED_DOWN_ANIM)) {
+    anim_multiplier -= 0.05f;
+    anim_multiplier = anim_multiplier < 0.1f ? 0.1f : anim_multiplier;
+  }
+
+  if (is_key_triggered(TOGGLE_ROOT_MOTION)) {
+    root_motion = !root_motion;
+    reset_time(anim_sq);
+  }
+
   if (!disable_input)
     update(dt);
   else if (is_key_triggered(KEY_EXIT_LEVEL))
     exit_level = 1;
 
+  render_advanced_controls();
   render_basic_controls(font, font_image_id, &pipeline, dt, fps, disable_input);
   flush_operations();
 }
@@ -330,14 +384,14 @@ render_skinned_mesh(
   skinned_mesh_t *skinned_mesh = _skinned_mesh;
   render_mesh(scene, &skinned_mesh->mesh, texture_id, pipeline);
 
-  disable_depth_test();
-  {
+  if (!disable_skeleton_rendering) {
     cvector_t *nodes = &skinned_mesh->skeleton.nodes;
     skel_node_t *root = cvector_as(nodes, 0, skel_node_t);
+    disable_depth_test();
     render_bones(
       skinned_mesh, 0, root, get_node_local_transform(anim_sq, 0), pipeline);
+    enable_depth_test();
   }
-  enable_depth_test();
 }
 
 static
