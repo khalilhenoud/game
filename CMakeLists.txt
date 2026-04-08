@@ -55,6 +55,10 @@ if (NOT HAS_STANDALONE_PREDECESSOR)
     message(FATAL_ERROR "The renderer submdule was not downloaded!")
   endif()
 
+  if (NOT EXISTS "${PROJECT_SOURCE_DIR}/external/base_assets/CMakeLists.txt")
+    message(FATAL_ERROR "The base_assets submdule was not downloaded!")
+  endif()
+
   add_subdirectory(external/windowing windowing)
   add_subdirectory(external/library library)
   add_subdirectory(external/math math)
@@ -62,6 +66,7 @@ if (NOT HAS_STANDALONE_PREDECESSOR)
   add_subdirectory(external/entity entity)
   add_subdirectory(external/loaders loaders)
   add_subdirectory(external/renderer renderer)
+  add_subdirectory(external/base_assets base_assets)
 endif()
 
 # add the executable
@@ -91,6 +96,7 @@ target_link_libraries(${PROJECT_NAME}
 						PUBLIC library
 						PUBLIC math
             PUBLIC collision
+            PUBLIC base_assets
             PRIVATE windowing
 						PRIVATE entity
 						PRIVATE loaders
