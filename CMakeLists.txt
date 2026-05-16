@@ -55,8 +55,8 @@ if (NOT HAS_STANDALONE_PREDECESSOR)
     message(FATAL_ERROR "The renderer submdule was not downloaded!")
   endif()
 
-  if (NOT EXISTS "${PROJECT_SOURCE_DIR}/external/base_assets/CMakeLists.txt")
-    message(FATAL_ERROR "The base_assets submdule was not downloaded!")
+  if (NOT EXISTS "${PROJECT_SOURCE_DIR}/external/acsu/CMakeLists.txt")
+    message(FATAL_ERROR "The acsu submdule was not downloaded!")
   endif()
 
   add_subdirectory(external/windowing windowing)
@@ -66,7 +66,7 @@ if (NOT HAS_STANDALONE_PREDECESSOR)
   add_subdirectory(external/entity entity)
   add_subdirectory(external/loaders loaders)
   add_subdirectory(external/renderer renderer)
-  add_subdirectory(external/base_assets base_assets)
+  add_subdirectory(external/acsu acsu)
 endif()
 
 # add the executable
