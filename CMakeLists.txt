@@ -96,7 +96,7 @@ target_link_libraries(${PROJECT_NAME}
 						PUBLIC library
 						PUBLIC math
             PUBLIC collision
-            PUBLIC base_assets
+            PUBLIC acsu
             PRIVATE windowing
 						PRIVATE entity
 						PRIVATE loaders
