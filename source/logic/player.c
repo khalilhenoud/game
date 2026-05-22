@@ -21,11 +21,11 @@
 #include <game/logic/player.h>
 #include <collision/face.h>
 #include <entity/scene/camera.h>
-#include <entity/spatial/bvh.h>
 #include <math/capsule.h>
 #include <math/matrix4f.h>
 #include <math/vector3f.h>
 #include <renderer/renderer_opengl.h>
+#include <spatial/bvh/bvh.h>
 
 #define KEY_MOVEMENT_MODE         '9'
 #define KEY_SPEED_PLUS            '1'

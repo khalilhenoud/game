@@ -20,10 +20,10 @@
 #include <entity/runtime/font_utils.h>
 #include <entity/scene/camera.h>
 #include <entity/scene/scene.h>
-#include <entity/spatial/bvh.h>
 #include <library/framerate_controller/framerate_controller.h>
 #include <renderer/pipeline.h>
 #include <renderer/renderer_opengl.h>
+#include <spatial/bvh/bvh.h>
 
 #define TILDE   0xC0
 #define KEY_EXIT_LEVEL           '0'

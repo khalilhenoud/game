@@ -13,8 +13,8 @@
 #include <game/debug/flags.h>
 #include <game/logic/collision_utils.h>
 #include <collision/face.h>
-#include <entity/spatial/bvh.h>
 #include <math/capsule.h>
+#include <spatial/bvh/bvh.h>
 
 #define FLOOR_ANGLE_DEGREES 60
 
