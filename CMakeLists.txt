@@ -59,6 +59,10 @@ if (NOT HAS_STANDALONE_PREDECESSOR)
     message(FATAL_ERROR "The acsu submdule was not downloaded!")
   endif()
 
+  if (NOT EXISTS "${PROJECT_SOURCE_DIR}/external/spatial/CMakeLists.txt")
+  message(FATAL_ERROR "The spatial submdule was not downloaded!")
+endif()
+
   add_subdirectory(external/windowing windowing)
   add_subdirectory(external/library library)
   add_subdirectory(external/math math)
@@ -67,6 +71,7 @@ if (NOT HAS_STANDALONE_PREDECESSOR)
   add_subdirectory(external/loaders loaders)
   add_subdirectory(external/renderer renderer)
   add_subdirectory(external/acsu acsu)
+  add_subdirectory(external/spatial spatial)
 endif()
 
 # add the executable
@@ -97,6 +102,7 @@ target_link_libraries(${PROJECT_NAME}
 						PUBLIC math
             PUBLIC collision
             PUBLIC acsu
+            PUBLIC spatial
             PRIVATE windowing
 						PRIVATE entity
 						PRIVATE loaders
