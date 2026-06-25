@@ -79,8 +79,8 @@ if (NOT HAS_STANDALONE_PREDECESSOR)
     message(FATAL_ERROR "The font submdule was not downloaded!")
   endif()
 
-  if (NOT EXISTS "${PROJECT_SOURCE_DIR}/external/elements/CMakeLists.txt")
-    message(FATAL_ERROR "The elements submdule was not downloaded!")
+  if (NOT EXISTS "${PROJECT_SOURCE_DIR}/external/props/CMakeLists.txt")
+    message(FATAL_ERROR "The props submdule was not downloaded!")
   endif()
 
   if (NOT EXISTS "${PROJECT_SOURCE_DIR}/external/skeleton/CMakeLists.txt")
@@ -104,7 +104,7 @@ if (NOT HAS_STANDALONE_PREDECESSOR)
   add_subdirectory(external/mesh mesh)
   add_subdirectory(external/level level)
   add_subdirectory(external/font font)
-  add_subdirectory(external/elements elements)
+  add_subdirectory(external/props props)
   add_subdirectory(external/skeleton skeleton)
   add_subdirectory(external/animation animation)
 endif()
@@ -142,7 +142,7 @@ target_link_libraries(${PROJECT_NAME}
             PUBLIC mesh
             PUBLIC level
             PUBLIC font
-						PUBLIC elements
+						PUBLIC props
             PUBLIC skeleton
             PUBLIC animation
             PRIVATE windowing
