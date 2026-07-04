@@ -16,8 +16,8 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <entity/mesh/color.h>
 #include <library/containers/cvector.h>
+#include <props/color.h>
 
 
 // NOTE: This is all extremely rudimentary until the time when I implement a

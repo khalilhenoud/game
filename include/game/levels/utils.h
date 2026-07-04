@@ -16,7 +16,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <entity/mesh/color.h>
+#include <props/color.h>
 
 
 typedef struct allocator_t allocator_t;

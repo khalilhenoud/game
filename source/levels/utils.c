@@ -16,8 +16,6 @@
 #include <game/levels/utils.h>
 #include <entity/level/level.h>
 #include <entity/misc/font.h>
-#include <entity/scene/camera.h>
-#include <entity/scene/light.h>
 #include <entity/scene/node.h>
 #include <entity/scene/scene.h>
 #include <library/allocator/allocator.h>
@@ -25,6 +23,8 @@
 #include <library/filesystem/io.h>
 #include <library/streams/binary_stream.h>
 #include <library/string/cstring.h>
+#include <props/camera.h>
+#include <props/light.h>
 #include <renderer/pipeline.h>
 
 

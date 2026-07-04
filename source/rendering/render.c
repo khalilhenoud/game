@@ -13,7 +13,6 @@
 #include <game/rendering/load_font.h>
 #include <game/rendering/load_image.h>
 #include <game/rendering/render.h>
-#include <entity/mesh/color.h>
 #include <entity/mesh/material.h>
 #include <entity/mesh/mesh.h>
 #include <entity/mesh/mesh_utils.h>
@@ -23,14 +22,15 @@
 #include <entity/runtime/font_utils.h>
 #include <entity/runtime/texture.h>
 #include <entity/runtime/texture_utils.h>
-#include <entity/scene/camera.h>
-#include <entity/scene/light.h>
 #include <entity/scene/node.h>
 #include <entity/scene/scene.h>
 #include <library/allocator/allocator.h>
 #include <library/containers/chashmap.h>
 #include <library/core/core.h>
 #include <library/string/cstring.h>
+#include <props/camera.h>
+#include <props/color.h>
+#include <props/light.h>
 #include <renderer/pipeline.h>
 #include <renderer/renderer_opengl.h>
 
