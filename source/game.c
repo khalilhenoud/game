@@ -13,6 +13,7 @@
 #include <game/levels/anim_preview.h>
 #include <game/levels/generic_level.h>
 #include <game/levels/room_select.h>
+#include <game/levels/test_level.h>
 #include <game/memory_tracking/memory_tracking.h>
 #include <entity/level/level.h>
 #include <library/allocator/allocator.h>
@@ -66,6 +67,8 @@ construct_level()
     construct_generic_level(&level);
   else if (level_option == 1)
     construct_anim_preview_level(&level);
+  else if (level_option == 2)
+    construct_test_level(&level);
 }
 
 static

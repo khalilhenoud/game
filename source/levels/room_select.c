@@ -28,6 +28,7 @@
 #define ARROW_DOWN          0x28
 #define SPACE               0x20
 #define KEY_K               0x4B
+#define KEY_I               0x49
 
 
 static framerate_controller_t *controller;
@@ -168,6 +169,10 @@ room_selection()
     if (strcmp(rooms.dir_names[index], "room_select") != 0)
       exit_room_select = index;
       exit_room_option = 1;
+  } else if (is_key_triggered(KEY_I)) {
+    if (strcmp(rooms.dir_names[index], "room_select") != 0)
+      exit_room_select = index;
+      exit_room_option = 2;
   }
 }
 
