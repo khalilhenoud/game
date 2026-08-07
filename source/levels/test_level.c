@@ -9,6 +9,9 @@
  *
  */
 #include <assert.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 #include <game/debug/flags.h>
 #include <game/debug/text.h>
 #include <game/input/input.h>
@@ -19,6 +22,8 @@
 #include <entity/runtime/font.h>
 #include <entity/runtime/font_utils.h>
 #include <entity/scene/scene.h>
+#include <level/sublevel_asset.h>
+#include <library/asset/asset_ref.h>
 #include <library/framerate_controller/framerate_controller.h>
 #include <props/camera.h>
 #include <renderer/pipeline.h>
@@ -39,6 +44,58 @@ static packaged_scene_render_data_t* render_data;
 static font_runtime_t* font;
 static uint32_t font_image_id;
 static bvh_t* bvh;
+asset_ref_t sublevel;
+
+static
+uint32_t
+count_occurrence(const char *str, char delim)
+{
+  assert(str);
+
+  {
+    uint32_t count = 0;
+    const char *ptr = str - 1;
+    do {
+      ptr = strchr(++ptr, delim);
+    } while (ptr != NULL && ++count);
+
+    return count;
+  }
+}
+
+static
+ptrdiff_t
+find_occurrence_at_hit(const char *str, char delim, uint32_t hits)
+{
+  assert(str);
+
+  {
+    uint32_t count = 0;
+    const char *ptr = str - 1;
+    do {
+      ptr = strchr(++ptr, delim);
+    } while (ptr != NULL && ++count < hits);
+
+    return ptr - str;
+  }
+}
+
+// return the folder where all other assets relative to this exist.
+static
+void
+extract_folder(const cstring_t *source, cstring_t *target)
+{
+  assert(strlen(source->str) < 512);
+
+  {
+    char delim = '\\';
+    uint32_t count = count_occurrence(source->str, delim);
+    uint32_t pos = find_occurrence_at_hit(source->str, delim, count - 1);
+    char str[512] = {};
+    memcpy(str, source->str, pos);
+    cstring_setup2(target, str);
+  }
+}
 
 static
 void
@@ -46,6 +103,16 @@ load_level(
   const level_context_t context,
   const allocator_t *allocator)
 {
+  cstring_t target;
+  cstring_setup2(&sublevel.path, "F:\\data\\level1\\sublevels\\e3m1.bin");
+  sublevel.type_id = get_type_id(sublevel_asset_t);
+
+  extract_folder(&sublevel.path, &target);
+  cstring_cleanup2(&target);
+  asset_ref_cleanup(&sublevel, &g_default_allocator);
+
+
+
   // char room[256] = {0};
   // sprintf(room, "rooms\\%s", context.level);
   // scene = load_scene(context.data_set, room, context.level, allocator);
