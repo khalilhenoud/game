@@ -46,6 +46,7 @@ static uint32_t font_image_id;
 static bvh_t* bvh;
 asset_ref_t sublevel;
 
+// TODO: move this to the string library
 static
 uint32_t
 count_occurrence(const char *str, char delim)
@@ -108,6 +109,18 @@ load_level(
   sublevel.type_id = get_type_id(sublevel_asset_t);
 
   extract_folder(&sublevel.path, &target);
+
+  uint32_t id = get_type_id(sublevel_asset_t);
+
+  vtable_t *vtable = get_vtable(sublevel.type_id);
+  loader_t loader = vtable->fn_get_loader();
+  deloader_t deloader = vtable->fn_get_deloader();
+  void *data = NULL;
+  loader(&data, &sublevel, &g_default_allocator);
+  sublevel_asset_t *assetptr = data;
+
+  deloader(&data, &sublevel, &g_default_allocator);
+
   cstring_cleanup2(&target);
   asset_ref_cleanup(&sublevel, &g_default_allocator);
 
