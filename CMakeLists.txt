@@ -133,6 +133,9 @@ add_library(${PROJECT_NAME} SHARED
       ./source/game.c
       ./include/game/internal/module.h)
 
+# target_link_options(game PUBLIC "LINKER:/include:sublevel_asset_get_loader")
+
+
 target_link_libraries(${PROJECT_NAME}
 						PUBLIC library
 						PUBLIC math
