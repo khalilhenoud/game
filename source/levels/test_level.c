@@ -112,12 +112,9 @@ load_level(
 
   uint32_t id = get_type_id(sublevel_asset_t);
 
-  // NOTE: it is the use of these functions that forces the linker to call
   vtable_t *vtable = get_vtable(sublevel.type_id);
-  // __pragma(comment(linker,"/include:sublevel_asset_get_loader"))      // this works
-
-  loader_t loader = vtable->fn_get_loader();//sublevel_asset_get_loader();//
-  deloader_t deloader = vtable->fn_get_deloader();//sublevel_asset_get_deloader();//
+  loader_t loader = vtable->fn_get_loader();
+  deloader_t deloader = vtable->fn_get_deloader();
   void *data = NULL;
   loader(&data, &sublevel, &g_default_allocator);
   sublevel_asset_t *assetptr = data;

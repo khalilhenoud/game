@@ -133,8 +133,16 @@ add_library(${PROJECT_NAME} SHARED
       ./source/game.c
       ./include/game/internal/module.h)
 
-# target_link_options(game PUBLIC "LINKER:/include:sublevel_asset_get_loader")
-
+# ensure the dlls are included by force linking a symbol
+target_link_options(game PUBLIC "LINKER:/include:sublevel_asset_get_loader")
+target_link_options(game PUBLIC "LINKER:/include:texture_asset_get_loader")
+target_link_options(game PUBLIC "LINKER:/include:material_asset_get_loader")
+target_link_options(game PUBLIC "LINKER:/include:mesh_asset_get_loader")
+target_link_options(game PUBLIC "LINKER:/include:light_deserialize")
+target_link_options(game PUBLIC "LINKER:/include:animation_asset_get_loader")
+target_link_options(game PUBLIC "LINKER:/include:skeleton_asset_get_loader")
+target_link_options(game PUBLIC "LINKER:/include:font_asset_get_loader")
+target_link_options(game PUBLIC "LINKER:/include:bvh_create")
 
 target_link_libraries(${PROJECT_NAME}
 						PUBLIC library
