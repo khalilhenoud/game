@@ -24,6 +24,7 @@
 #include <entity/scene/scene.h>
 #include <level/sublevel_asset.h>
 #include <library/asset/asset_ref.h>
+#include <library/containers/chashmap.h>
 #include <library/framerate_controller/framerate_controller.h>
 #include <props/camera.h>
 #include <renderer/pipeline.h>
@@ -43,8 +44,7 @@ static camera_t* camera;
 static packaged_scene_render_data_t* render_data;
 static font_runtime_t* font;
 static uint32_t font_image_id;
-static bvh_t* bvh;
-asset_ref_t sublevel;
+static bvh_t *bvh;
 
 // TODO: move this to the string library
 static
@@ -98,31 +98,111 @@ extract_folder(const cstring_t *source, cstring_t *target)
   }
 }
 
+static cstring_t asset_folder;
+static sublevel_asset_t *sublevel;
+static asset_ref_t sublevel_ref;
+static chashmap_t ref_assets_map;
+
+static
+void
+amend_asset_ref()
+{}
+
+static
+void
+load_recursive_inner(
+  chashmap_t *ref_assets_map,
+  const asset_ref_t *asset_ref,
+  const cstring_t *root_folder)
+{
+  assert(!chashmap_is_def(ref_assets_map) && !cstring_is_def(root_folder));
+
+  vtable_t *vtable = get_vtable(asset_ref->type_id);
+  loader_t loader = vtable->fn_get_loader();
+  void *data = NULL;
+  loader(&data, asset_ref, &g_default_allocator);
+  uint32_t count = vtable->fn_type_asset_count(data);
+
+  chashmap_insert(
+    ref_assets_map, *asset_ref, asset_ref_t, data, void*);
+
+  if (!count)
+    return;
+
+  cvector_t asset_refs;
+  cvector_setup2(&asset_refs, asset_ref_t*);
+  cvector_resize(&asset_refs, count);
+  vtable->fn_type_get_assets(data, asset_refs.data);
+
+  for (uint32_t i = 0; i < asset_refs.size; ++i) {
+    asset_ref_t **ref = cvector_as(&asset_refs, i, asset_ref_t*);
+    load_recursive_inner(ref_assets_map, *ref, root_folder);
+  }
+}
+
+static
+void
+load_recursive(
+  chashmap_t *ref_assets_map,
+  const asset_ref_t *root,
+  cstring_t *root_folder)
+{
+  const static uint32_t base_entries_count = 256;
+
+  assert(chashmap_is_def(ref_assets_map) && cstring_is_def(root_folder));
+  extract_folder(&root->path, root_folder);
+
+  vtable_t *vtable = get_vtable(root->type_id);
+  loader_t loader = vtable->fn_get_loader();
+  void *data = NULL;
+  loader(&data, root, &g_default_allocator);
+  uint32_t count = vtable->fn_type_asset_count(data);
+
+  chashmap_setup2(ref_assets_map, asset_ref_t, void *);
+  chashmap_reserve(ref_assets_map, base_entries_count);
+  chashmap_insert(
+    ref_assets_map, *root, asset_ref_t, data, void*);
+
+  if (!count)
+    return;
+
+  cvector_t asset_refs;
+  cvector_setup2(&asset_refs, asset_ref_t*);
+  cvector_resize(&asset_refs, count);
+  vtable->fn_type_get_assets(data, asset_refs.data);
+
+  for (uint32_t i = 0; i < asset_refs.size; ++i) {
+    asset_ref_t **ref = cvector_as(&asset_refs, i, asset_ref_t*);
+    load_recursive_inner(ref_assets_map, *ref, root_folder);
+  }
+}
+
 static
 void
 load_level(
   const level_context_t context,
   const allocator_t *allocator)
 {
-  cstring_t target;
-  cstring_setup2(&sublevel.path, "F:\\data\\level1\\sublevels\\e3m1.bin");
-  sublevel.type_id = get_type_id(sublevel_asset_t);
+  cstring_setup2(&sublevel_ref.path, "F:\\data\\level1\\sublevels\\e3m1.bin");
+  sublevel_ref.type_id = get_type_id(sublevel_asset_t);
 
-  extract_folder(&sublevel.path, &target);
+  chashmap_def(&ref_assets_map);
+  cstring_def(&asset_folder);
+  load_recursive(&ref_assets_map, &sublevel_ref, &asset_folder);
 
-  uint32_t id = get_type_id(sublevel_asset_t);
+  // extract_folder(&sublevel_ref.path, &asset_folder);
 
-  vtable_t *vtable = get_vtable(sublevel.type_id);
-  loader_t loader = vtable->fn_get_loader();
-  deloader_t deloader = vtable->fn_get_deloader();
-  void *data = NULL;
-  loader(&data, &sublevel, &g_default_allocator);
-  sublevel_asset_t *assetptr = data;
+  // vtable_t *vtable = get_vtable(sublevel_ref.type_id);
+  // loader_t loader = vtable->fn_get_loader();
+  // loader(&sublevel, &sublevel_ref, &g_default_allocator);
+  // uint32_t count = vtable->fn_type_asset_count(sublevel);
 
-  deloader(&data, &sublevel, &g_default_allocator);
 
-  cstring_cleanup2(&target);
-  asset_ref_cleanup(&sublevel, &g_default_allocator);
+  // TODO: Do not forget the deloading.
+  // deloader_t deloader = vtable->fn_get_deloader();
+  // deloader(&sublevel, &sublevel_ref, &g_default_allocator);
+  // cstring_cleanup2(&asset_folder);
+  // asset_ref_cleanup(&sublevel_ref, &g_default_allocator);
 
 
 
