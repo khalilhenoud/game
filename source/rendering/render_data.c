@@ -22,6 +22,7 @@
 #include <entity/runtime/texture_utils.h>
 #include <entity/scene/node.h>
 #include <entity/scene/scene.h>
+#include <level/sublevel_asset.h>
 #include <library/allocator/allocator.h>
 #include <library/string/cstring.h>
 #include <props/camera.h>
@@ -123,18 +124,6 @@ free_packaged_skinned_mesh_data_internal(
     allocator);
 
   cvector_cleanup2(&skinned_mesh_data->texture_ids);
-}
-
-// UNUSED
-void
-free_mesh_render_data(
-  packaged_mesh_data_t *mesh_data,
-  const allocator_t *allocator)
-{
-  assert(mesh_data && allocator);
-
-  free_packaged_mesh_data_internal(mesh_data, allocator);
-  allocator->mem_free(mesh_data);
 }
 
 static
@@ -880,5 +869,36 @@ render_packaged_scene_data(
       render_data,
       pipeline,
       cvector_as(&render_data->node_data, 0, node_t));
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void
+cleanup_sublevel_render_data(
+  packaged_sublevel_render_data_t *render_data,
+  const allocator_t *allocator)
+{}
+
+packaged_sublevel_render_data_t *
+load_sublevel_render_data(
+  sublevel_asset_t *sublevel,
+  const allocator_t *allocator)
+{
+  assert(sublevel && allocator);
+
+  {
+    packaged_sublevel_render_data_t *render_data =
+      allocator->mem_alloc(sizeof(packaged_sublevel_render_data_t));
+    memset(render_data, 0, sizeof(packaged_sublevel_render_data_t));
+
+    // load_scene_node_data(scene, &render_data->node_data, allocator);
+    load_scene_mesh_data(scene, &render_data->mesh_data, allocator);
+    // load_scene_skinned_mesh_data(
+      // scene, &render_data->skinned_mesh_data, allocator);
+    // load_scene_font_data(scene, &render_data->font_data, allocator);
+    load_scene_light_data(scene, &render_data->light_data, allocator);
+    // load_scene_camera_data(scene, &render_data->camera_data, allocator);
+
+    return render_data;
   }
 }

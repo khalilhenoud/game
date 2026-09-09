@@ -39,9 +39,8 @@ static framerate_controller_t *controller;
 static uint32_t exit_level = 0;
 static int32_t disable_input;
 static pipeline_t pipeline;
-static camera_t* camera;
-// static scene_t* scene;
-static packaged_scene_render_data_t* render_data;
+static camera_t *camera;
+static packaged_sublevel_render_data_t *render_data;
 static font_runtime_t* font;
 static uint32_t font_image_id;
 static bvh_t *bvh;
@@ -81,6 +80,7 @@ find_occurrence_at_hit(const char *str, char delim, uint32_t hits)
   }
 }
 
+// TODO: Unused, consider moving to the string library,
 // return the folder where all other assets relative to this exist.
 static
 void
@@ -98,24 +98,23 @@ extract_folder(const cstring_t *source, cstring_t *target)
   }
 }
 
-static cstring_t asset_folder;
 static sublevel_asset_t *sublevel;
 static asset_ref_t sublevel_ref;
 static chashmap_t ref_assets_map;
+const static uint32_t asset_map_reservation = 256;
 
 static
 void
-amend_asset_ref()
-{}
-
-static
-void
-load_recursive_inner(
+load_recursive(
   chashmap_t *ref_assets_map,
-  const asset_ref_t *asset_ref,
-  const cstring_t *root_folder)
+  const asset_ref_t *asset_ref)
 {
-  assert(!chashmap_is_def(ref_assets_map) && !cstring_is_def(root_folder));
+  assert(!chashmap_is_def(ref_assets_map));
+
+  uint32_t index;
+  chashmap_contains(ref_assets_map, *asset_ref, asset_ref_t, index);
+  if (index != CHASHTABLE_INVALID_INDEX)
+    return;
 
   vtable_t *vtable = get_vtable(asset_ref->type_id);
   loader_t loader = vtable->fn_get_loader();
@@ -136,45 +135,28 @@ load_recursive_inner(
 
   for (uint32_t i = 0; i < asset_refs.size; ++i) {
     asset_ref_t **ref = cvector_as(&asset_refs, i, asset_ref_t*);
-    load_recursive_inner(ref_assets_map, *ref, root_folder);
+    load_recursive(ref_assets_map, *ref);
   }
 }
 
 static
 void
-load_recursive(
-  chashmap_t *ref_assets_map,
-  const asset_ref_t *root,
-  cstring_t *root_folder)
+unload_assets(chashmap_t *ref_assets_map)
 {
-  const static uint32_t base_entries_count = 256;
+  asset_ref_t *asset_ref = NULL;
+  void **data = NULL;
 
-  assert(chashmap_is_def(ref_assets_map) && cstring_is_def(root_folder));
-  extract_folder(&root->path, root_folder);
-
-  vtable_t *vtable = get_vtable(root->type_id);
-  loader_t loader = vtable->fn_get_loader();
-  void *data = NULL;
-  loader(&data, root, &g_default_allocator);
-  uint32_t count = vtable->fn_type_asset_count(data);
-
-  chashmap_setup2(ref_assets_map, asset_ref_t, void *);
-  chashmap_reserve(ref_assets_map, base_entries_count);
-  chashmap_insert(
-    ref_assets_map, *root, asset_ref_t, data, void*);
-
-  if (!count)
-    return;
-
-  cvector_t asset_refs;
-  cvector_setup2(&asset_refs, asset_ref_t*);
-  cvector_resize(&asset_refs, count);
-  vtable->fn_type_get_assets(data, asset_refs.data);
-
-  for (uint32_t i = 0; i < asset_refs.size; ++i) {
-    asset_ref_t **ref = cvector_as(&asset_refs, i, asset_ref_t*);
-    load_recursive_inner(ref_assets_map, *ref, root_folder);
-  }
+  for (
+    chashmap_iterator_t iter = chashmap_begin(ref_assets_map);
+    !chashmap_iter_equal(iter, chashmap_end(ref_assets_map));
+    chashmap_advance(&iter)) {
+      asset_ref = chashmap_key(&iter, asset_ref_t);
+      data = chashmap_value(&iter, void *);
+      vtable_t *vtable = get_vtable(asset_ref->type_id);
+      deloader_t deloader = vtable->fn_get_deloader();
+      deloader(data, asset_ref, &g_default_allocator);
+    }
+  chashmap_cleanup(ref_assets_map, NULL);
 }
 
 static
@@ -183,36 +165,25 @@ load_level(
   const level_context_t context,
   const allocator_t *allocator)
 {
-  cstring_setup2(&sublevel_ref.path, "F:\\data\\level1\\sublevels\\e3m1.bin");
+  cstring_setup2(&sublevel_ref.path, "F:\\data\\level1\\sublevels\\e1m1.bin");
   sublevel_ref.type_id = get_type_id(sublevel_asset_t);
 
   chashmap_def(&ref_assets_map);
-  cstring_def(&asset_folder);
-  load_recursive(&ref_assets_map, &sublevel_ref, &asset_folder);
+  chashmap_setup2(&ref_assets_map, asset_ref_t, void *);
+  chashmap_reserve(&ref_assets_map, asset_map_reservation);
+  load_recursive(&ref_assets_map, &sublevel_ref);
 
+  void **data = NULL;
+  chashmap_at(&ref_assets_map, sublevel_ref, asset_ref_t, void *, data);
+  sublevel = *(sublevel_asset_t **)data;
+
+  // NOTE: usage example
   // extract_folder(&sublevel_ref.path, &asset_folder);
 
-  // vtable_t *vtable = get_vtable(sublevel_ref.type_id);
-  // loader_t loader = vtable->fn_get_loader();
-  // loader(&sublevel, &sublevel_ref, &g_default_allocator);
-  // uint32_t count = vtable->fn_type_asset_count(sublevel);
-
-
-  // TODO: Do not forget the deloading.
-  // deloader_t deloader = vtable->fn_get_deloader();
-  // deloader(&sublevel, &sublevel_ref, &g_default_allocator);
-  // cstring_cleanup2(&asset_folder);
-  // asset_ref_cleanup(&sublevel_ref, &g_default_allocator);
-
-
-
-  // char room[256] = {0};
-  // sprintf(room, "rooms\\%s", context.level);
-  // scene = load_scene(context.data_set, room, context.level, allocator);
   // create_default_camera(scene, camera);
   // create_default_light(scene, allocator);
 
-  // render_data = load_scene_render_data(scene, allocator);
+  render_data = load_sublevel_render_data(sublevel, allocator);
   // prep_packaged_render_data(context.data_set, room, render_data, allocator);
 
   // camera = cvector_as(&render_data->camera_data, 0, camera_t);
@@ -267,8 +238,8 @@ void
 unload_level(const allocator_t* allocator)
 {
   controller_free(controller, allocator);
-  // scene_free(scene, allocator);
-  // cleanup_packaged_render_data(render_data, allocator);
+  cleanup_sublevel_render_data(render_data, allocator);
+  unload_assets(&ref_assets_map);
 }
 
 static
