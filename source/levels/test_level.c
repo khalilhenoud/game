@@ -45,6 +45,8 @@ static font_runtime_t* font;
 static uint32_t font_image_id;
 static bvh_t *bvh;
 
+// NOTE: usage example
+// extract_folder(&sublevel_ref.path, &asset_folder);
 // TODO: move this to the string library
 static
 uint32_t
@@ -177,15 +179,11 @@ load_level(
   chashmap_at(&ref_assets_map, sublevel_ref, asset_ref_t, void *, data);
   sublevel = *(sublevel_asset_t **)data;
 
-  // NOTE: usage example
-  // extract_folder(&sublevel_ref.path, &asset_folder);
-
-  // create_default_camera(scene, camera);
-  // create_default_light(scene, allocator);
-
   render_data = load_sublevel_render_data(sublevel, allocator);
   // prep_packaged_render_data(context.data_set, room, render_data, allocator);
 
+  // create_default_camera(scene, camera);
+  // create_default_light(scene, allocator);
   // camera = cvector_as(&render_data->camera_data, 0, camera_t);
   // font = cvector_as(&render_data->font_data.fonts, 0, font_runtime_t);
   // font_image_id = *cvector_as(&render_data->font_data.texture_ids, 0, uint32_t);
