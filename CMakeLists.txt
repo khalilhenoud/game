@@ -115,6 +115,7 @@ add_library(${PROJECT_NAME} SHARED
       ./source/rendering/load_font.c
       ./source/rendering/load_image.c
       ./source/rendering/render_data.c
+      ./source/rendering/render_data2.c
       ./source/rendering/render.c
       ./source/logic/player.c
       ./source/logic/camera.c

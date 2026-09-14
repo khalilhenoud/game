@@ -29,7 +29,6 @@ typedef struct skinned_mesh_t skinned_mesh_t;
 typedef struct allocator_t allocator_t;
 typedef struct camera_t camera_t;
 typedef struct pipeline_t pipeline_t;
-typedef struct sublevel_asset_t sublevel_asset_t;
 
 typedef
 struct packaged_mesh_data_t {
@@ -98,22 +97,6 @@ render_packaged_scene_data(
   packaged_scene_render_data_t *render_data,
   pipeline_t *pipeline,
   camera_t *camera);
-
-////////////////////////////////////////////////////////////////////////////////
-typedef
-struct packaged_sublevel_render_data_t {
-  packaged_mesh_data_t mesh_data;
-  cvector_t light_data;                   // renderer_light_t
-} packaged_sublevel_render_data_t;
-
-void
-cleanup_sublevel_render_data(
-  packaged_sublevel_render_data_t *render_data);
-
-packaged_sublevel_render_data_t *
-load_sublevel_render_data(
-  sublevel_asset_t *sublevel,
-  chashmap_t *assets_map);
 
 #ifdef __cplusplus
 }

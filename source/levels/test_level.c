@@ -17,7 +17,7 @@
 #include <game/input/input.h>
 #include <game/levels/utils.h>
 #include <game/logic/player.h>
-#include <game/rendering/render_data.h>
+#include <game/rendering/render_data2.h>
 #include <entity/level/level.h>
 #include <entity/runtime/font.h>
 #include <entity/runtime/font_utils.h>
@@ -103,6 +103,7 @@ extract_folder(const cstring_t *source, cstring_t *target)
 static sublevel_asset_t *sublevel;
 static asset_ref_t sublevel_ref;
 static chashmap_t ref_assets_map;
+static chashmap_t status_map;
 const static uint32_t asset_map_reservation = 256;
 
 static
@@ -175,12 +176,15 @@ load_level(
   chashmap_reserve(&ref_assets_map, asset_map_reservation);
   load_recursive(&ref_assets_map, &sublevel_ref);
 
+  chashmap_def(&status_map);
+  chashmap_setup2(&status_map, asset_ref_t, uint32_t);
+  chashmap_reserve(&status_map, asset_map_reservation);
+
   void **data = NULL;
   chashmap_at(&ref_assets_map, sublevel_ref, asset_ref_t, void *, data);
   sublevel = *(sublevel_asset_t **)data;
 
-  render_data = load_sublevel_render_data(sublevel, allocator);
-  // prep_packaged_render_data(context.data_set, room, render_data, allocator);
+  render_data = prep_render_data(sublevel, &ref_assets_map, &status_map);
 
   // create_default_camera(scene, camera);
   // create_default_light(scene, allocator);
@@ -236,7 +240,7 @@ void
 unload_level(const allocator_t* allocator)
 {
   controller_free(controller, allocator);
-  cleanup_sublevel_render_data(render_data, allocator);
+  cleanup_sublevel_render_data(render_data, &status_map);
   unload_assets(&ref_assets_map);
 }
 
