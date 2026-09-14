@@ -39,7 +39,7 @@ static framerate_controller_t *controller;
 static uint32_t exit_level = 0;
 static int32_t disable_input;
 static pipeline_t pipeline;
-static camera_t *camera;
+static camera_t camera;
 static packaged_sublevel_render_data_t *render_data;
 static font_runtime_t* font;
 static uint32_t font_image_id;
@@ -164,6 +164,50 @@ unload_assets(chashmap_t *ref_assets_map)
 
 static
 void
+vec3f_set_all(vector3f *vec, float val)
+{
+  vec->data[0] = vec->data[1] = vec->data[2] = val;
+}
+
+static
+void
+setup_default_camera( matrix4f *transform)
+{
+  vec3f_set_all(&camera.position, 0.f);
+  mult_set_m4f_p3f(transform, &camera.position);
+
+  camera.lookat_direction.data[0] =
+  camera.lookat_direction.data[1] = 0.f;
+  camera.lookat_direction.data[2] = -1.f;
+  camera.up_vector.data[0] =
+  camera.up_vector.data[2] = 0.f;
+  camera.up_vector.data[1] = 1.f;
+}
+
+static
+void
+setup_default_light(sublevel_asset_t *sublevel)
+{
+  if (sublevel->lights.size)
+    return;
+
+  light_t *light = NULL;
+  cvector_resize(&sublevel->lights, 1);
+  light = cvector_as(&sublevel->lights, 0, light_t);
+  cstring_setup(&light->name, "test", &g_default_allocator);
+  vector3f_set_3f(&light->position, 0.f, 200.f, 0.f);
+  vector3f_set_3f(&light->direction, -1.f, -1.f, -1.f);
+  normalize_set_v3f(&light->direction);
+  vector3f_set_3f(&light->up, 0.f, 0.f, 1.f);
+  light->diffuse.data[0] = light->diffuse.data[1] = light->diffuse.data[2] =
+  light->diffuse.data[3] = 1.f;
+  light->specular = light->diffuse;
+  light->ambient = light->diffuse;
+  light->type = LIGHT_TYPE_DIRECTIONAL;
+}
+
+static
+void
 load_level(
   const level_context_t context,
   const allocator_t *allocator)
@@ -184,23 +228,22 @@ load_level(
   chashmap_at(&ref_assets_map, sublevel_ref, asset_ref_t, void *, data);
   sublevel = *(sublevel_asset_t **)data;
 
+  setup_default_camera(&sublevel->transform);
+  setup_default_light(sublevel);
+  bvh = &sublevel->bvh;
   render_data = prep_render_data(sublevel, &ref_assets_map, &status_map);
 
-  // create_default_camera(scene, camera);
-  // create_default_light(scene, allocator);
-  // camera = cvector_as(&render_data->camera_data, 0, camera_t);
   // font = cvector_as(&render_data->font_data.fonts, 0, font_runtime_t);
   // font_image_id = *cvector_as(&render_data->font_data.texture_ids, 0, uint32_t);
-  // bvh = (scene->bvh_repo.size) ? cvector_as(&scene->bvh_repo, 0, bvh_t) : NULL;
 
   setup_view_projection_pipeline(&context, &pipeline);
   show_mouse_cursor(0);
 
-  // player_init(
-  //   scene->metadata.player_start,
-  //   scene->metadata.player_angle,
-  //   camera,
-  //   bvh);
+  player_init(
+    sublevel->metadata.player_start,
+    sublevel->metadata.player_angle,
+    &camera,
+    bvh);
 
   controller = controller_allocate(allocator, 60, 1u);
   exit_level = 0;
