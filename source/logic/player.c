@@ -42,6 +42,12 @@
 #define ITERATIONS                16
 #define LIMIT_DISTANCE            EPSILON_FLOAT_MIN_PRECISION
 
+#if 0
+#define add_debug_text(a, b, c, d)   add_debug_text_to_frame(a, b, c, d)
+#else
+#define add_debug_text(a, b, c, d)
+#endif
+
 
 typedef
 struct {
@@ -288,7 +294,7 @@ update_vertical_velocity(float delta_time)
       char text[512];
       memset(text, 0, sizeof(text));
       sprintf(text, "SNAPPING %f", distance);
-      add_debug_text_to_frame(text, green, 400.f, 300.f);
+      add_debug_text(text, green, 400.f, 300.f);
       add_debug_face_to_frame(
         cvector_as(&bvh->faces, i, face_t),
         cvector_as(&bvh->normals, i, vector3f),
@@ -308,7 +314,7 @@ step_up_debug_data(float delta, const intersection_info_t *info)
     char text[512];
     memset(text, 0, sizeof(text));
     sprintf(text, "STEPUP %f", delta);
-    add_debug_text_to_frame(text, red, 400.f, 320.f);
+    add_debug_text(text, red, 400.f, 320.f);
   }
 
   if (g_debug_flags.draw_step_up) {
@@ -350,7 +356,7 @@ display_debug_normal(
   memset(text, 0, sizeof(text));
   sprintf(text, "NORMAL %.3f %.3f %.3f",
   normal->data[0], normal->data[1], normal->data[2]);
-  add_debug_text_to_frame(text, color, x, y);
+  add_debug_text(text, color, x, y);
 }
 
 static
@@ -476,7 +482,7 @@ handle_collision_detection(const vector3f displacement)
         add_set_v3f(&capsule->center, &velocity);
 #endif
 
-        add_debug_text_to_frame("NOT IN VALID SPACE", red, 200.f, 20.f);
+        add_debug_text("NOT IN VALID SPACE", red, 200.f, 20.f);
       }
 
       return flags;
@@ -535,7 +541,7 @@ handle_collision_detection(const vector3f displacement)
   }
 
   if (!is_in_valid_space(s_player.bvh, &s_player.capsule))
-    add_debug_text_to_frame("NOT IN VALID SPACE", red, 200.f, 20.f);
+    add_debug_text("NOT IN VALID SPACE", red, 200.f, 20.f);
 
   return flags;
 }
@@ -601,7 +607,7 @@ player_update(float delta_time)
     flags = handle_collision_detection(displacement);
 
     if (!is_in_valid_space(s_player.bvh, &s_player.capsule))
-      add_debug_text_to_frame("NOT IN VALID SPACE", red, 200.f, 20.f);
+      add_debug_text("NOT IN VALID SPACE", red, 200.f, 20.f);
   } else
     add_set_v3f(&s_player.capsule.center, &displacement);
 
@@ -662,9 +668,9 @@ player_update(float delta_time)
       s_player.capsule.center.data[1],
       s_player.capsule.center.data[2]);
 
-    add_debug_text_to_frame(
+    add_debug_text(
       array, green, 0.f, (y+=20.f));
-    add_debug_text_to_frame(
+    add_debug_text(
       "[9] SWITCH CAMERA MODE",
       s_player.is_flying ? red : white, 0.f, (y+=20.f));
   }

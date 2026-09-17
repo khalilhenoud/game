@@ -67,25 +67,36 @@ set_default_ambient(color_t *ambient)
 
 inline
 void
+set_color4f(color_t *color, float r, float g, float b, float a)
+{
+  color->data[0] = r;
+  color->data[1] = g;
+  color->data[2] = b;
+  color->data[3] = a;
+}
+
+
+inline
+void
 populate_mesh_render_data(const mesh_asset_t *mesh, mesh_render_data_t *data)
 {
   uint32_t array_size = sizeof(float) * mesh->vertices.size;
   data->vertex_count = (mesh->vertices.size)/3;
- /* data->vertices = g_default_allocator.mem_alloc(array_size);
-  memcpy(data->vertices, mesh->vertices.data, array_size);*/
-  //data->normals = g_default_allocator.mem_alloc(array_size);
-  //memcpy(data->normals, mesh->normals.data, array_size);
-  //data->uv_coords = g_default_allocator.mem_alloc(array_size);
-  //memcpy(data->uv_coords, mesh->uvs.data, array_size);
+  data->vertices = g_default_allocator.mem_alloc(array_size);
+  memcpy(data->vertices, mesh->vertices.data, array_size);
+  data->normals = g_default_allocator.mem_alloc(array_size);
+  memcpy(data->normals, mesh->normals.data, array_size);
+  data->uv_coords = g_default_allocator.mem_alloc(array_size);
+  memcpy(data->uv_coords, mesh->uvs.data, array_size);
 
-  //array_size = sizeof(uint32_t) * mesh->indices.size;
-  //data->indices_count = mesh->indices.size;
-  //data->indices = g_default_allocator.mem_alloc(array_size);
-  //memcpy(data->indices, mesh->indices.data, array_size);
+  array_size = sizeof(uint32_t) * mesh->indices.size;
+  data->indices_count = mesh->indices.size;
+  data->indices = g_default_allocator.mem_alloc(array_size);
+  memcpy(data->indices, mesh->indices.data, array_size);
 
-  //set_default_ambient(&data->ambient);
-  //copy_vec4f(data->diffuse.data, data->ambient.data);
-  //copy_vec4f(data->specular.data, data->ambient.data);
+  set_default_ambient(&data->ambient);
+  copy_vec4f(data->diffuse.data, data->ambient.data);
+  copy_vec4f(data->specular.data, data->ambient.data);
 }
 
 static
@@ -116,7 +127,6 @@ load_sublevel_mesh_data(
     mesh_asset_t *mesh = cvector_as(&sublevel->meshes.meshes, i, mesh_asset_t);
     mesh_render_data_t *r_data = cvector_as(data, i, mesh_render_data_t);
     populate_mesh_render_data(mesh, r_data);
-    continue;
 
     if (mesh->materials.size == 1) {
       asset_ref_t *material_ref = cvector_as(&mesh->materials, 0, asset_ref_t);
@@ -206,7 +216,7 @@ load_sublevel_light_data(
 }
 
 void
-cleanup_sublevel_render_data(
+cleanup_render_data(
   packaged_sublevel_render_data_t *render_data,
   chashmap_t *status_map)
 {
@@ -246,4 +256,67 @@ prep_render_data(
     sublevel, &render_data->mesh_data, assets_map, status_map);
   load_sublevel_light_data(sublevel, &render_data->light_data);
   return render_data;
+}
+
+static
+void
+set_light_properties_internal(
+  camera_t *camera,
+  packaged_sublevel_render_data_t *render_data,
+  pipeline_t *pipeline)
+{
+#if 0
+  // we could pick and enable only the closest lights...
+  for (uint32_t i = 0; i < render_data->light_data.count; ++i) {
+    renderer_light_t* light = render_data->light_data.lights + i;
+    set_light_properties(i, light, pipeline);
+  }
+#else
+  renderer_light_t light;
+  memset(&light, 0, sizeof(renderer_light_t));
+  light.type = RENDERER_LIGHT_TYPE_DIRECTIONAL;
+  vector3f_set_3f(&light.position, 0.f, 1.f, 0.f);
+  vector3f_set_3f(&light.direction, 0.f, 0.f, 0.f);
+  vector3f_set_3f(&light.up, 0.f, 0.f, 0.f);
+  light.attenuation_constant = 1;
+  light.attenuation_linear = 0.001f;
+  set_color4f(&light.ambient, 1.f, 1.f, 1.f, 1.f);
+  set_color4f(&light.diffuse, 1.f, 1.f, 1.f, 1.f);
+  set_color4f(&light.specular, 0.f, 0.f, 0.f, 1.f);
+  set_light_properties(0, &light, pipeline);
+  vector3f_set_3f(&light.position, 1.f, 0.f, 0.f);
+  set_color4f(&light.ambient, 0.2f, 0.2f, 0.2f, 1.f);
+  set_light_properties(1, &light, pipeline);
+#endif
+}
+
+void
+render_render_data(
+  packaged_sublevel_render_data_t *render_data,
+  pipeline_t *pipeline,
+  camera_t *camera,
+  matrix4f *root)
+{
+  assert(render_data && pipeline && camera);
+
+  matrix4f out;
+  memset(&out, 0, sizeof(matrix4f));
+  camera_view_matrix(camera, &out);
+  set_matrix_mode(pipeline, MODELVIEW);
+  load_identity(pipeline);
+  post_multiply(pipeline, &out);
+
+  set_light_properties_internal(camera, render_data, pipeline);
+
+  // TODO(khalil): is the order accurate? are the light pretransformed, check
+  push_matrix(pipeline);
+  pre_multiply(pipeline, root);
+
+  draw_meshes(
+    render_data->mesh_data.mesh_render_data.data,
+    render_data->mesh_data.texture_ids.data,
+    render_data->mesh_data.mesh_render_data.size,
+    pipeline);
+
+  pop_matrix(pipeline);
 }

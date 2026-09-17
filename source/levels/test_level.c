@@ -259,7 +259,7 @@ update_level(const allocator_t* allocator)
 
   input_update();
   clear_color_and_depth_buffers();
-  // render_packaged_scene_data(render_data, &pipeline, camera);
+  render_render_data(render_data, &pipeline, &camera, &sublevel->transform);
 
   if (is_key_triggered(TILDE)) {
     disable_input = !disable_input;
@@ -268,7 +268,7 @@ update_level(const allocator_t* allocator)
 
   if (!disable_input) {
     // update_debug_flags();
-    // player_update(dt);
+    player_update(dt);
     // draw_debug_text_frame(&pipeline, font, font_image_id);
     // draw_debug_face_frame(&pipeline, g_debug_flags.disable_depth_debug);
   } else if (is_key_triggered(KEY_EXIT_LEVEL))
@@ -283,7 +283,7 @@ void
 unload_level(const allocator_t* allocator)
 {
   controller_free(controller, allocator);
-  cleanup_sublevel_render_data(render_data, &status_map);
+  cleanup_render_data(render_data, &status_map);
   unload_assets(&ref_assets_map);
 }
 

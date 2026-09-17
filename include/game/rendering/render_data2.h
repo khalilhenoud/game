@@ -17,6 +17,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <library/containers/cvector.h>
+#include <math/matrix4f.h>
 #include <props/color.h>
 
 
@@ -39,7 +40,7 @@ struct packaged_sublevel_render_data_t {
 } packaged_sublevel_render_data_t;
 
 void
-cleanup_sublevel_render_data(
+cleanup_render_data(
   packaged_sublevel_render_data_t *render_data,
   chashmap_t *status_map);
 
@@ -48,6 +49,13 @@ prep_render_data(
   sublevel_asset_t *sublevel,
   chashmap_t *assets_map,
   chashmap_t *status_map);
+
+void
+render_render_data(
+  packaged_sublevel_render_data_t *render_data,
+  pipeline_t *pipeline,
+  camera_t *camera,
+  matrix4f *root);
 
 #ifdef __cplusplus
 }
