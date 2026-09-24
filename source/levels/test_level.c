@@ -19,9 +19,10 @@
 #include <game/logic/player.h>
 #include <game/rendering/render_data2.h>
 #include <entity/level/level.h>
-#include <entity/runtime/font.h>
+// #include <entity/runtime/font.h>
 #include <entity/runtime/font_utils.h>
 #include <entity/scene/scene.h>
+#include <font/font_asset.h>
 #include <level/sublevel_asset.h>
 #include <library/asset/asset_ref.h>
 #include <library/containers/chashmap.h>
@@ -41,7 +42,7 @@ static int32_t disable_input;
 static pipeline_t pipeline;
 static camera_t camera;
 static packaged_sublevel_render_data_t *render_data;
-static font_runtime_t* font;
+// static font_runtime_t* font;
 static uint32_t font_image_id;
 static bvh_t *bvh;
 
@@ -101,7 +102,9 @@ extract_folder(const cstring_t *source, cstring_t *target)
 }
 
 static sublevel_asset_t *sublevel;
+static font_asset_t *font;
 static asset_ref_t sublevel_ref;
+static asset_ref_t font_ref;
 static chashmap_t ref_assets_map;
 static chashmap_t status_map;
 const static uint32_t asset_map_reservation = 256;
@@ -212,6 +215,9 @@ load_level(
   const level_context_t context,
   const allocator_t *allocator)
 {
+  cstring_setup2(&font_ref.path, "F:\\data\\level1\\fonts\\Malgun Gothic.bin");
+  font_ref.type_id = get_type_id(font_asset_t);
+
   cstring_setup2(&sublevel_ref.path, "F:\\data\\level1\\sublevels\\e1m1.bin");
   sublevel_ref.type_id = get_type_id(sublevel_asset_t);
 
@@ -219,6 +225,7 @@ load_level(
   chashmap_setup2(&ref_assets_map, asset_ref_t, void *);
   chashmap_reserve(&ref_assets_map, asset_map_reservation);
   load_recursive(&ref_assets_map, &sublevel_ref);
+  load_recursive(&ref_assets_map, &font_ref);
 
   chashmap_def(&status_map);
   chashmap_setup2(&status_map, asset_ref_t, uint32_t);
@@ -227,6 +234,9 @@ load_level(
   void **data = NULL;
   chashmap_at(&ref_assets_map, sublevel_ref, asset_ref_t, void *, data);
   sublevel = *(sublevel_asset_t **)data;
+
+  chashmap_at(&ref_assets_map, font_ref, asset_ref_t, void *, data);
+  font = *(font_asset_t **)data;
 
   setup_default_camera(&sublevel->transform);
   setup_default_light(sublevel);
