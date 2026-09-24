@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <string.h>
 #include <game/rendering/render_data2.h>
+#include <font/font_asset.h>
 #include <level/sublevel_asset.h>
 #include <library/allocator/allocator.h>
 #include <library/asset/asset_ref.h>
@@ -319,4 +320,52 @@ render_render_data(
     pipeline);
 
   pop_matrix(pipeline);
+}
+
+void
+cleanup_font_render_data(
+  packaged_font_render_data_t *render_data,
+  chashmap_t *status_map)
+{
+  g_default_allocator.mem_free(render_data);
+}
+
+packaged_font_render_data_t *
+prep_font_render_data(
+  font_asset_t *font,
+  chashmap_t *assets_map,
+  chashmap_t *status_map)
+{
+  assert(font && assets_map && status_map);
+
+  packaged_font_render_data_t *render_data =
+    g_default_allocator.mem_alloc(sizeof(packaged_font_render_data_t));
+  memset(render_data, 0, sizeof(packaged_font_render_data_t));
+
+  render_data->texture_asset = &font->texture_ref;
+
+  void **data = NULL;
+  chashmap_at(assets_map, font->texture_ref, asset_ref_t, void *, data);
+  texture_asset_t *texture = *(texture_asset_t **)data;
+
+  // upload if it isn't, and set the id.
+  uint32_t index;
+  chashmap_contains(status_map, font->texture_ref, asset_ref_t, index);
+  if (index == CHASHTABLE_INVALID_INDEX) {
+    uint32_t id = upload_to_gpu(
+      NULL,
+      texture->buffer.data,
+      texture->width,
+      texture->height,
+      (renderer_image_format_t)texture->format);
+    chashmap_insert(status_map, font->texture_ref, asset_ref_t, id, uint32_t);
+    render_data->texture_id = id;
+  } else {
+    uint32_t *ptr_id = NULL;
+    chashmap_at(status_map, font->texture_ref, asset_ref_t, uint32_t, ptr_id);
+    assert(ptr_id);
+    render_data->texture_id = *ptr_id;
+  }
+
+  return render_data;
 }

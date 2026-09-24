@@ -42,8 +42,9 @@ static int32_t disable_input;
 static pipeline_t pipeline;
 static camera_t camera;
 static packaged_sublevel_render_data_t *render_data;
+static packaged_font_render_data_t *font_render_data;
 // static font_runtime_t* font;
-static uint32_t font_image_id;
+// static uint32_t font_image_id;
 static bvh_t *bvh;
 
 // NOTE: usage example
@@ -242,6 +243,7 @@ load_level(
   setup_default_light(sublevel);
   bvh = &sublevel->bvh;
   render_data = prep_render_data(sublevel, &ref_assets_map, &status_map);
+  font_render_data = prep_font_render_data(font, &ref_assets_map, &status_map);
 
   // font = cvector_as(&render_data->font_data.fonts, 0, font_runtime_t);
   // font_image_id = *cvector_as(&render_data->font_data.texture_ids, 0, uint32_t);
@@ -277,14 +279,15 @@ update_level(const allocator_t* allocator)
   }
 
   if (!disable_input) {
-    // update_debug_flags();
+    update_debug_flags();
     player_update(dt);
-    // draw_debug_text_frame(&pipeline, font, font_image_id);
-    // draw_debug_face_frame(&pipeline, g_debug_flags.disable_depth_debug);
+    draw_debug_text_frame2(&pipeline, font, font_render_data->texture_id);
+    draw_debug_face_frame(&pipeline, g_debug_flags.disable_depth_debug);
   } else if (is_key_triggered(KEY_EXIT_LEVEL))
     exit_level = 1;
 
-  // render_basic_controls(font, font_image_id, &pipeline, dt, fps, disable_input);
+  render_basic_controls2(
+    font, font_render_data->texture_id, &pipeline, dt, fps, disable_input);
   flush_operations();
 }
 
@@ -294,6 +297,7 @@ unload_level(const allocator_t* allocator)
 {
   controller_free(controller, allocator);
   cleanup_render_data(render_data, &status_map);
+  cleanup_font_render_data(font_render_data, &status_map);
   unload_assets(&ref_assets_map);
 }
 

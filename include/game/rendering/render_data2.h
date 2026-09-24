@@ -24,6 +24,7 @@ extern "C" {
 typedef struct camera_t camera_t;
 typedef struct pipeline_t pipeline_t;
 typedef struct sublevel_asset_t sublevel_asset_t;
+typedef struct font_asset_t font_asset_t;
 typedef struct chashmap_t chashmap_t;
 
 typedef
@@ -39,6 +40,12 @@ struct packaged_sublevel_render_data_t {
   cvector_t light_data;                   // renderer_light_t
 } packaged_sublevel_render_data_t;
 
+typedef
+struct packaged_font_render_data_t {
+  asset_ref_t *texture_asset;
+  uint32_t texture_id;
+} packaged_font_render_data_t;
+
 void
 cleanup_render_data(
   packaged_sublevel_render_data_t *render_data,
@@ -47,6 +54,17 @@ cleanup_render_data(
 packaged_sublevel_render_data_t *
 prep_render_data(
   sublevel_asset_t *sublevel,
+  chashmap_t *assets_map,
+  chashmap_t *status_map);
+
+void
+cleanup_font_render_data(
+  packaged_font_render_data_t *render_data,
+  chashmap_t *status_map);
+
+packaged_font_render_data_t *
+prep_font_render_data(
+  font_asset_t *font,
   chashmap_t *assets_map,
   chashmap_t *status_map);
 

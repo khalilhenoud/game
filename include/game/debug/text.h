@@ -21,6 +21,7 @@ extern "C" {
 
 typedef struct pipeline_t pipeline_t;
 typedef struct font_runtime_t font_runtime_t;
+typedef struct font_asset_t font_asset_t;
 
 void
 add_debug_text_to_frame(
@@ -41,6 +42,23 @@ render_text_to_screen(
   uint32_t font_image_id,
   pipeline_t* pipeline,
   const char** text,
+  uint32_t count,
+  const debug_color_t color,
+  float x,
+  float y);
+
+void
+draw_debug_text_frame2(
+  pipeline_t *pipeline,
+  font_asset_t *font,
+  const uint32_t font_image_id);
+
+void
+render_text_to_screen2(
+  font_asset_t *font,
+  uint32_t font_image_id,
+  pipeline_t *pipeline,
+  const char **text,
   uint32_t count,
   const debug_color_t color,
   float x,

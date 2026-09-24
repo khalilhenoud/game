@@ -23,6 +23,7 @@ typedef struct allocator_t allocator_t;
 typedef struct camera_t camera_t;
 typedef struct font_t font_t;
 typedef struct font_runtime_t font_runtime_t;
+typedef struct font_asset_t font_asset_t;
 typedef struct level_context_t level_context_t;
 typedef struct pipeline_t pipeline_t;
 typedef struct scene_t scene_t;
@@ -53,6 +54,15 @@ setup_view_projection_pipeline(
 void
 render_basic_controls(
   font_runtime_t *font,
+  uint32_t font_image_id,
+  pipeline_t *pipeline,
+  float dt_seconds,
+  uint64_t frame_rate,
+  int32_t enabled);
+
+void
+render_basic_controls2(
+  font_asset_t *font,
   uint32_t font_image_id,
   pipeline_t *pipeline,
   float dt_seconds,

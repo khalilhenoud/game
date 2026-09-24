@@ -18,6 +18,7 @@
 #include <entity/misc/font.h>
 #include <entity/scene/node.h>
 #include <entity/scene/scene.h>
+#include <font/font_asset.h>
 #include <library/allocator/allocator.h>
 #include <library/containers/cvector.h>
 #include <library/filesystem/io.h>
@@ -187,6 +188,53 @@ render_basic_controls(
     text[4] = "[~] CAMERA UNLOCK/LOCK";
     text[5] = "[1/2/WASD/EQ] CAMERA SPEED/MOVEMENT";
     render_text_to_screen(
+      font,
+      font_image_id,
+      pipeline,
+      text,
+      6,
+      white,
+      0.f, 0.f);
+  }
+}
+
+void
+render_basic_controls2(
+  font_asset_t *font,
+  uint32_t font_image_id,
+  pipeline_t *pipeline,
+  float dt_seconds,
+  uint64_t frame_rate,
+  int32_t disable_input)
+{
+  if (disable_input) {
+    const char* text[1];
+
+    text[0] = "press [0] to return to room selection";
+    render_text_to_screen2(
+      font,
+      font_image_id,
+      pipeline,
+      text,
+      1,
+      white,
+      0.f, 0.f);
+  } else {
+    const char* text[6];
+    char delta_str[128] = { 0 };
+    char frame_str[128] = { 0 };
+
+    sprintf(delta_str, "delta: %f", dt_seconds);
+    sprintf(frame_str, "fps: %llu", frame_rate);
+
+    // display simple instructions.
+    text[0] = delta_str;
+    text[1] = frame_str;
+    text[2] = "----------------";
+    text[3] = "[C] RESET CAMERA";
+    text[4] = "[~] CAMERA UNLOCK/LOCK";
+    text[5] = "[1/2/WASD/EQ] CAMERA SPEED/MOVEMENT";
+    render_text_to_screen2(
       font,
       font_image_id,
       pipeline,

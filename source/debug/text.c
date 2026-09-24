@@ -12,6 +12,7 @@
 #include <string.h>
 #include <game/debug/text.h>
 #include <entity/runtime/font.h>
+#include <font/font_asset.h>
 #include <renderer/pipeline.h>
 #include <renderer/renderer_opengl.h>
 
@@ -114,6 +115,139 @@ render_text_to_screen(
       for (uint32_t k = 0; k < str_length; ++k) {
         char c = str[k];
         get_glyph_bounds(font, c, &from);
+        bounds[k].data[0] = from[0];
+        bounds[k].data[1] = from[1];
+        bounds[k].data[2] = from[2];
+        bounds[k].data[3] = from[3];
+        bounds[k].data[4] = from[4];
+        bounds[k].data[5] = from[5];
+      }
+
+      get_frustum(pipeline, &left, &right, &bottom, &top, &nearz, &farz);
+      get_viewport_info(
+        pipeline,
+        &viewport_left,
+        &viewport_top,
+        &viewport_right,
+        &viewport_bottom);
+      set_orthographic(
+        pipeline,
+        viewport_left,
+        viewport_right,
+        viewport_top,
+        viewport_bottom,
+        nearz,
+        farz);
+      update_projection(pipeline);
+
+      push_matrix(pipeline);
+      load_identity(pipeline);
+      pre_translate(
+        pipeline,
+        x,
+        viewport_bottom - ((i + 1) * (float)font->font_height) - y, -2);
+      pre_scale(
+        pipeline,
+        (float)font->cell_width,
+        (float)font->cell_height, 0);
+      draw_unit_quads(bounds, str_length, font_image_id, r_color, pipeline);
+      pop_matrix(pipeline);
+
+      set_perspective(pipeline, left, right, bottom, top, nearz, farz);
+      update_projection(pipeline);
+    }
+  }
+}
+
+// TODO: this could be optimized, enable batch draw.
+void
+draw_debug_text_frame2(
+  pipeline_t *pipeline,
+  font_asset_t *font,
+  const uint32_t font_image_id)
+{
+  const char *text;
+  for (uint32_t i = 0; i < debug_frame.used; ++i) {
+    text = debug_frame.text[i].text;
+    render_text_to_screen2(
+      font,
+      font_image_id,
+      pipeline,
+      &text,
+      1,
+      debug_frame.text[i].color,
+      debug_frame.text[i].x,
+      debug_frame.text[i].y);
+  }
+
+  debug_frame.used = 0;
+}
+
+inline
+uint32_t
+get_glyph_count2(const font_asset_t *font)
+{
+  return
+    (font->texture_width/font->cell_width) *
+    (font->texture_height/font->cell_height);
+}
+
+inline
+uint32_t
+has_glyph2(
+  const font_asset_t *font,
+  const char c)
+{
+ uint32_t total = get_glyph_count2(font);
+ uint32_t cui = (uint32_t)c;
+ return cui >= font->start_char && cui < (font->start_char + total);
+}
+
+inline
+void
+get_glyph_bounds2(
+  const font_asset_t *font,
+  const char c,
+  float out[6])
+{
+  assert(font != NULL);
+
+  {
+    char glyph = has_glyph2(font, c) ? c : '$';
+    memcpy(out, font->bounds + glyph, sizeof(float) * 6);
+  }
+}
+
+void
+render_text_to_screen2(
+  font_asset_t *font,
+  uint32_t font_image_id,
+  pipeline_t *pipeline,
+  const char **text,
+  uint32_t count,
+  const debug_color_t color,
+  float x,
+  float y)
+{
+  if (!(font && pipeline && text))
+    return;
+
+  {
+    float left, right, bottom, top, nearz, farz;
+    float viewport_left, viewport_right, viewport_bottom, viewport_top;
+    color_t r_color;
+    float from[6];
+    unit_quad_t bounds[512];
+    uint32_t str_length = 0;
+
+    memcpy(r_color.data, color.data, sizeof(color.data));
+
+    for (uint32_t i = 0; i < count; ++i) {
+      const char* str = text[i];
+      str_length = strlen(str);
+      for (uint32_t k = 0; k < str_length; ++k) {
+        char c = str[k];
+        get_glyph_bounds2(font, c, from);
         bounds[k].data[0] = from[0];
         bounds[k].data[1] = from[1];
         bounds[k].data[2] = from[2];
