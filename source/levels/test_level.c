@@ -19,9 +19,6 @@
 #include <game/logic/player.h>
 #include <game/rendering/render_data2.h>
 #include <entity/level/level.h>
-// #include <entity/runtime/font.h>
-#include <entity/runtime/font_utils.h>
-#include <entity/scene/scene.h>
 #include <font/font_asset.h>
 #include <level/sublevel_asset.h>
 #include <library/asset/asset_ref.h>
@@ -41,71 +38,14 @@ static uint32_t exit_level = 0;
 static int32_t disable_input;
 static pipeline_t pipeline;
 static camera_t camera;
-static packaged_sublevel_render_data_t *render_data;
-static packaged_font_render_data_t *font_render_data;
-// static font_runtime_t* font;
-// static uint32_t font_image_id;
 static bvh_t *bvh;
 
-// NOTE: usage example
-// extract_folder(&sublevel_ref.path, &asset_folder);
-// TODO: move this to the string library
-static
-uint32_t
-count_occurrence(const char *str, char delim)
-{
-  assert(str);
-
-  {
-    uint32_t count = 0;
-    const char *ptr = str - 1;
-    do {
-      ptr = strchr(++ptr, delim);
-    } while (ptr != NULL && ++count);
-
-    return count;
-  }
-}
-
-static
-ptrdiff_t
-find_occurrence_at_hit(const char *str, char delim, uint32_t hits)
-{
-  assert(str);
-
-  {
-    uint32_t count = 0;
-    const char *ptr = str - 1;
-    do {
-      ptr = strchr(++ptr, delim);
-    } while (ptr != NULL && ++count < hits);
-
-    return ptr - str;
-  }
-}
-
-// TODO: Unused, consider moving to the string library,
-// return the folder where all other assets relative to this exist.
-static
-void
-extract_folder(const cstring_t *source, cstring_t *target)
-{
-  assert(strlen(source->str) < 512);
-
-  {
-    char delim = '\\';
-    uint32_t count = count_occurrence(source->str, delim);
-    uint32_t pos = find_occurrence_at_hit(source->str, delim, count - 1);
-    char str[512] = {};
-    memcpy(str, source->str, pos);
-    cstring_setup2(target, str);
-  }
-}
-
-static sublevel_asset_t *sublevel;
-static font_asset_t *font;
 static asset_ref_t sublevel_ref;
+static sublevel_asset_t *sublevel;
+static packaged_sublevel_render_data_t *render_data;
 static asset_ref_t font_ref;
+static font_asset_t *font;
+static packaged_font_render_data_t *font_render_data;
 static chashmap_t ref_assets_map;
 static chashmap_t status_map;
 const static uint32_t asset_map_reservation = 256;
@@ -216,7 +156,7 @@ load_level(
   const level_context_t context,
   const allocator_t *allocator)
 {
-  cstring_setup2(&font_ref.path, "F:\\data\\level1\\fonts\\Malgun Gothic.bin");
+  cstring_setup2(&font_ref.path, "F:\\data\\shared\\fonts\\Malgun Gothic.bin");
   font_ref.type_id = get_type_id(font_asset_t);
 
   cstring_setup2(&sublevel_ref.path, "F:\\data\\level1\\sublevels\\e1m1.bin");
@@ -244,9 +184,6 @@ load_level(
   bvh = &sublevel->bvh;
   render_data = prep_render_data(sublevel, &ref_assets_map, &status_map);
   font_render_data = prep_font_render_data(font, &ref_assets_map, &status_map);
-
-  // font = cvector_as(&render_data->font_data.fonts, 0, font_runtime_t);
-  // font_image_id = *cvector_as(&render_data->font_data.texture_ids, 0, uint32_t);
 
   setup_view_projection_pipeline(&context, &pipeline);
   show_mouse_cursor(0);
