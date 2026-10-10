@@ -24,6 +24,7 @@
 #include <library/asset/asset_ref.h>
 #include <library/containers/chashmap.h>
 #include <library/framerate_controller/framerate_controller.h>
+#include <mesh/mesh_asset.h>
 #include <props/camera.h>
 #include <renderer/pipeline.h>
 #include <renderer/renderer_opengl.h>
@@ -46,6 +47,9 @@ static packaged_sublevel_render_data_t *render_data;
 static asset_ref_t font_ref;
 static font_asset_t *font;
 static packaged_font_render_data_t *font_render_data;
+static asset_ref_t mesh_ref;
+static mesh_asset_t *mesh;
+static packaged_mesh_render_data_t *mesh_render_data;
 static chashmap_t ref_assets_map;
 static chashmap_t status_map;
 const static uint32_t asset_map_reservation = 256;
@@ -162,11 +166,15 @@ load_level(
   cstring_setup2(&sublevel_ref.path, "F:\\data\\level1\\sublevels\\e1m1.bin");
   sublevel_ref.type_id = get_type_id(sublevel_asset_t);
 
+  cstring_setup2(&mesh_ref.path, "F:\\data\\shared\\meshes\\Suzanne.bin");
+  mesh_ref.type_id = get_type_id(mesh_asset_t);
+
   chashmap_def(&ref_assets_map);
   chashmap_setup2(&ref_assets_map, asset_ref_t, void *);
   chashmap_reserve(&ref_assets_map, asset_map_reservation);
   load_recursive(&ref_assets_map, &sublevel_ref);
   load_recursive(&ref_assets_map, &font_ref);
+  load_recursive(&ref_assets_map, &mesh_ref);
 
   chashmap_def(&status_map);
   chashmap_setup2(&status_map, asset_ref_t, uint32_t);
@@ -179,11 +187,15 @@ load_level(
   chashmap_at(&ref_assets_map, font_ref, asset_ref_t, void *, data);
   font = *(font_asset_t **)data;
 
+  chashmap_at(&ref_assets_map, mesh_ref, asset_ref_t, void *, data);
+  mesh = *(mesh_asset_t **)data;
+
   setup_default_camera(&sublevel->transform);
   setup_default_light(sublevel);
   bvh = &sublevel->bvh;
   render_data = prep_render_data(sublevel, &ref_assets_map, &status_map);
   font_render_data = prep_font_render_data(font, &ref_assets_map, &status_map);
+  mesh_render_data = prep_mesh_render_data(mesh, &ref_assets_map, &status_map);
 
   setup_view_projection_pipeline(&context, &pipeline);
   show_mouse_cursor(0);
@@ -209,6 +221,8 @@ update_level(const allocator_t* allocator)
   input_update();
   clear_color_and_depth_buffers();
   render_render_data(render_data, &pipeline, &camera, &sublevel->transform);
+  render_mesh_render_data(
+    mesh_render_data, &pipeline, &camera, &sublevel->transform);
 
   if (is_key_triggered(TILDE)) {
     disable_input = !disable_input;
@@ -235,6 +249,7 @@ unload_level(const allocator_t* allocator)
   controller_free(controller, allocator);
   cleanup_render_data(render_data, &status_map);
   cleanup_font_render_data(font_render_data, &status_map);
+  cleanup_mesh_render_data(mesh_render_data, &status_map);
   unload_assets(&ref_assets_map);
 }
 

@@ -21,11 +21,12 @@ extern "C" {
 #include <props/color.h>
 
 
+typedef struct chashmap_t chashmap_t;
 typedef struct camera_t camera_t;
 typedef struct pipeline_t pipeline_t;
 typedef struct sublevel_asset_t sublevel_asset_t;
 typedef struct font_asset_t font_asset_t;
-typedef struct chashmap_t chashmap_t;
+typedef struct mesh_asset_t mesh_asset_t;
 
 typedef
 struct packaged_mesh_render_data_t {
@@ -46,6 +47,7 @@ struct packaged_font_render_data_t {
   uint32_t texture_id;
 } packaged_font_render_data_t;
 
+// sublevel
 void
 cleanup_render_data(
   packaged_sublevel_render_data_t *render_data,
@@ -58,6 +60,14 @@ prep_render_data(
   chashmap_t *status_map);
 
 void
+render_render_data(
+  packaged_sublevel_render_data_t *render_data,
+  pipeline_t *pipeline,
+  camera_t *camera,
+  matrix4f *root);
+
+// font
+void
 cleanup_font_render_data(
   packaged_font_render_data_t *render_data,
   chashmap_t *status_map);
@@ -68,9 +78,21 @@ prep_font_render_data(
   chashmap_t *assets_map,
   chashmap_t *status_map);
 
+// mesh
+packaged_mesh_render_data_t *
+prep_mesh_render_data(
+  mesh_asset_t *mesh,
+  chashmap_t *assets_map,
+  chashmap_t *status_map);
+
 void
-render_render_data(
-  packaged_sublevel_render_data_t *render_data,
+cleanup_mesh_render_data(
+  packaged_mesh_render_data_t *render_data,
+  chashmap_t *status_map);
+
+void
+render_mesh_render_data(
+  packaged_mesh_render_data_t *render_data,
   pipeline_t *pipeline,
   camera_t *camera,
   matrix4f *root);

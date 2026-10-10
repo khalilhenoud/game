@@ -369,3 +369,159 @@ prep_font_render_data(
 
   return render_data;
 }
+
+///////////////////////MESH/////////////////////////////////////////////////////
+packaged_mesh_render_data_t *
+prep_mesh_render_data(
+  mesh_asset_t *mesh,
+  chashmap_t *assets_map,
+  chashmap_t *status_map)
+{
+  assert(mesh && assets_map && status_map);
+
+  packaged_mesh_render_data_t *mesh_data = g_default_allocator.mem_alloc(
+    sizeof(packaged_mesh_render_data_t));
+  memset(mesh_data, 0, sizeof(packaged_mesh_render_data_t));
+
+  // 1 texture per mesh right now
+  cvector_t *data = &mesh_data->mesh_render_data;
+  cvector_setup2(data, mesh_render_data_t);
+  cvector_resize(data, 1);
+
+  cvector_t *assets = &mesh_data->texture_assets;
+  cvector_setup2(assets, asset_ref_t *);
+  cvector_resize(assets, 1);
+
+  cvector_t *ids = &mesh_data->texture_ids;
+  cvector_setup2(ids, uint32_t);
+  cvector_resize(ids, 1);
+  memset(ids->data, 0, sizeof(uint32_t) * ids->size);
+
+  mesh_render_data_t *r_data = cvector_as(data, 0, mesh_render_data_t);
+  populate_mesh_render_data(mesh, r_data);
+
+  if (mesh->materials.size == 1) {
+    asset_ref_t *material_ref = cvector_as(&mesh->materials, 0, asset_ref_t);
+    if (material_ref->type_id == get_type_id(indexed_material_asset_t)) {
+      void **data = NULL;
+      chashmap_at(assets_map, *material_ref, asset_ref_t, void *, data);
+      indexed_material_asset_t *i_material = NULL;
+      i_material = *(indexed_material_asset_t **)data;
+
+      chashmap_at(
+        assets_map, i_material->bulk_material_ref, asset_ref_t, void *, data);
+      bulk_material_asset_t *b_material = NULL;
+      b_material = *(bulk_material_asset_t **)data;
+
+      material_asset_t *material = cvector_as(
+        &b_material->materials, i_material->index, material_asset_t);
+
+      // 1 texture per mesh
+      if (material->textures.size == 1) {
+        asset_ref_t *t_ref = cvector_as(&material->textures, 0, asset_ref_t);
+        chashmap_at(assets_map, *t_ref, asset_ref_t, void *, data);
+        texture_asset_t *texture = *(texture_asset_t **)data;
+
+        // set the ref
+        asset_ref_t **texture_asset = cvector_as(assets, 0, asset_ref_t *);
+        *texture_asset = t_ref;
+
+        // upload if it isn't, and set the id.
+        uint32_t index;
+        chashmap_contains(status_map, *t_ref, asset_ref_t, index);
+        if (index == CHASHTABLE_INVALID_INDEX) {
+          uint32_t id = upload_to_gpu(
+            NULL,
+            texture->buffer.data,
+            texture->width,
+            texture->height,
+            (renderer_image_format_t)texture->format);
+          chashmap_insert(status_map, *t_ref, asset_ref_t, id, uint32_t);
+          *cvector_as(ids, 0, uint32_t) = id;
+        } else {
+          uint32_t *ptr_id = NULL;
+          chashmap_at(status_map, *t_ref, asset_ref_t, uint32_t, ptr_id);
+          assert(ptr_id);
+          *cvector_as(ids, 0, uint32_t) = *ptr_id;
+        }
+      }
+    } else if (material_ref->type_id == get_type_id(material_asset_t)) {
+      void **data = NULL;
+      chashmap_at(assets_map, *material_ref, asset_ref_t, void *, data);
+      material_asset_t *material = *(material_asset_t **)data;;
+
+      // 1 texture per mesh
+      if (material->textures.size == 1) {
+        asset_ref_t *t_ref = cvector_as(&material->textures, 0, asset_ref_t);
+        chashmap_at(assets_map, *t_ref, asset_ref_t, void *, data);
+        texture_asset_t *texture = *(texture_asset_t **)data;
+
+        // set the ref
+        asset_ref_t **texture_asset = cvector_as(assets, 0, asset_ref_t *);
+        *texture_asset = t_ref;
+
+        // upload if it isn't, and set the id.
+        uint32_t index;
+        chashmap_contains(status_map, *t_ref, asset_ref_t, index);
+        if (index == CHASHTABLE_INVALID_INDEX) {
+          uint32_t id = upload_to_gpu(
+            NULL,
+            texture->buffer.data,
+            texture->width,
+            texture->height,
+            (renderer_image_format_t)texture->format);
+          chashmap_insert(status_map, *t_ref, asset_ref_t, id, uint32_t);
+          *cvector_as(ids, 0, uint32_t) = id;
+        } else {
+          uint32_t *ptr_id = NULL;
+          chashmap_at(status_map, *t_ref, asset_ref_t, uint32_t, ptr_id);
+          assert(ptr_id);
+          *cvector_as(ids, 0, uint32_t) = *ptr_id;
+        }
+      }
+    } else
+      assert(0);
+  }
+
+  return mesh_data;
+}
+
+void
+cleanup_mesh_render_data(
+  packaged_mesh_render_data_t *mesh_render_data,
+  chashmap_t *status_map)
+{
+  cvector_cleanup2(&mesh_render_data->mesh_render_data);
+  cvector_cleanup2(&mesh_render_data->texture_assets);
+  cvector_cleanup2(&mesh_render_data->texture_ids);
+  g_default_allocator.mem_free(mesh_render_data);
+}
+
+void
+render_mesh_render_data(
+  packaged_mesh_render_data_t *render_data,
+  pipeline_t *pipeline,
+  camera_t *camera,
+  matrix4f *root)
+{
+  assert(render_data && pipeline && camera);
+
+  matrix4f out;
+  memset(&out, 0, sizeof(matrix4f));
+  camera_view_matrix(camera, &out);
+  set_matrix_mode(pipeline, MODELVIEW);
+  load_identity(pipeline);
+  post_multiply(pipeline, &out);
+
+  // TODO(khalil): is the order accurate? are the light pretransformed, check
+  push_matrix(pipeline);
+  pre_multiply(pipeline, root);
+
+  draw_meshes(
+    render_data->mesh_render_data.data,
+    render_data->texture_ids.data,
+    render_data->mesh_render_data.size,
+    pipeline);
+
+  pop_matrix(pipeline);
+}
