@@ -128,6 +128,8 @@ add_library(${PROJECT_NAME} SHARED
       ./source/levels/anim_preview.c
       ./source/levels/generic_level.c
       ./source/levels/test_level.c
+      ./source/levels/test_anim_level.c
+      ./source/levels/test_mesh_level.c
       ./source/levels/room_select.c
       ./source/levels/utils.c
       ./source/input/input.c

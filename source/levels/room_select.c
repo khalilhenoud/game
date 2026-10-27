@@ -27,8 +27,6 @@
 #define ARROW_UP            0x26
 #define ARROW_DOWN          0x28
 #define SPACE               0x20
-#define KEY_K               0x4B
-#define KEY_I               0x49
 
 
 static framerate_controller_t *controller;
@@ -107,7 +105,7 @@ room_selection()
   uint32_t used = rooms.used;
 
   // small intro text
-  sprintf(name, "%s", "up down to navigate. space, k to select");
+  sprintf(name, "%s", "up down to navigate. space to select");
   text[0] = name;
   render_text_to_screen(&font, tex_id, &pipeline, text, 1, white, 5.f, 0.f);
   sprintf(name, "%s", "-------------------------------------");
@@ -162,17 +160,21 @@ room_selection()
   index = index > (rooms.used - 1) ? (rooms.used - 1) : index;
 
   if (is_key_triggered(SPACE)) {
-    if (strcmp(rooms.dir_names[index], "room_select") != 0)
+    if (strcmp(rooms.dir_names[index], "room_select") != 0) {
+      if (
+        strcmp(rooms.dir_names[index], "Silly Dancing") == 0 ||
+        strcmp(rooms.dir_names[index], "Standard Walk") == 0)
+        exit_room_option = 1;
+      else if (strcmp(rooms.dir_names[index], "a_test_level") == 0)
+        exit_room_option = 2;
+      else if (strcmp(rooms.dir_names[index], "a_test_anim_level") == 0)
+        exit_room_option = 3;
+      else if (strcmp(rooms.dir_names[index], "a_test_mesh_level") == 0)
+        exit_room_option = 4;
+      else
+        exit_room_option = 0;
       exit_room_select = index;
-      exit_room_option = 0;
-  } else if (is_key_triggered(KEY_K)) {
-    if (strcmp(rooms.dir_names[index], "room_select") != 0)
-      exit_room_select = index;
-      exit_room_option = 1;
-  } else if (is_key_triggered(KEY_I)) {
-    if (strcmp(rooms.dir_names[index], "room_select") != 0)
-      exit_room_select = index;
-      exit_room_option = 2;
+    }
   }
 }
 

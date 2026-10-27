@@ -69,6 +69,10 @@ construct_level()
     construct_anim_preview_level(&level);
   else if (level_option == 2)
     construct_test_level(&level);
+  else if (level_option == 3)
+    construct_test_anim_level(&level);
+  else if (level_option == 4)
+    construct_test_mesh_level(&level);
 }
 
 static

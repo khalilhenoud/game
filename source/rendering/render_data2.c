@@ -291,6 +291,38 @@ set_light_properties_internal(
 #endif
 }
 
+static
+void
+set_default_lights(pipeline_t *pipeline)
+{
+  renderer_light_t light;
+  memset(&light, 0, sizeof(renderer_light_t));
+  light.type = RENDERER_LIGHT_TYPE_DIRECTIONAL;
+  vector3f_set_3f(&light.position, 0.f, 1.f, 0.f);
+  vector3f_set_3f(&light.direction, 0.f, 0.f, 0.f);
+  vector3f_set_3f(&light.up, 0.f, 0.f, 0.f);
+  light.attenuation_constant = 1;
+  light.attenuation_linear = 0.001f;
+  set_color4f(&light.ambient, 1.f, 1.f, 1.f, 1.f);
+  set_color4f(&light.diffuse, 1.f, 1.f, 1.f, 1.f);
+  set_color4f(&light.specular, 0.f, 0.f, 0.f, 1.f);
+  set_light_properties(0, &light, pipeline);
+  enable_light(0);
+
+  vector3f_set_3f(&light.position, 1.f, 0.f, 0.f);
+  set_color4f(&light.ambient, 0.2f, 0.2f, 0.2f, 1.f);
+  set_light_properties(1, &light, pipeline);
+  enable_light(1);
+}
+
+static
+void
+disable_default_lights()
+{
+  disable_light(0);
+  disable_light(1);
+}
+
 void
 render_render_data(
   packaged_sublevel_render_data_t *render_data,
@@ -513,7 +545,8 @@ render_mesh_render_data(
   load_identity(pipeline);
   post_multiply(pipeline, &out);
 
-  // TODO(khalil): is the order accurate? are the light pretransformed, check
+  set_default_lights(pipeline);
+
   push_matrix(pipeline);
   pre_multiply(pipeline, root);
 
@@ -524,4 +557,6 @@ render_mesh_render_data(
     pipeline);
 
   pop_matrix(pipeline);
+
+  disable_default_lights();
 }
