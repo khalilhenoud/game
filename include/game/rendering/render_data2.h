@@ -24,6 +24,7 @@ extern "C" {
 typedef struct chashmap_t chashmap_t;
 typedef struct camera_t camera_t;
 typedef struct pipeline_t pipeline_t;
+typedef struct skeleton_asset_t skeleton_asset_t;
 typedef struct sublevel_asset_t sublevel_asset_t;
 typedef struct font_asset_t font_asset_t;
 typedef struct mesh_asset_t mesh_asset_t;
@@ -93,6 +94,15 @@ cleanup_mesh_render_data(
 void
 render_mesh_render_data(
   packaged_mesh_render_data_t *render_data,
+  pipeline_t *pipeline,
+  camera_t *camera,
+  matrix4f *root);
+
+void
+render_skinned_mesh_render_data(
+  packaged_mesh_render_data_t *render_data,
+  skeleton_asset_t *skeleton,
+  uint32_t hide_skeleton,
   pipeline_t *pipeline,
   camera_t *camera,
   matrix4f *root);

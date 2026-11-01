@@ -39,6 +39,7 @@
 #define KEY_MOVE_BACK             'S'
 #define KEY_MOVE_UP               'Q'
 #define KEY_MOVE_DOWN             'E'
+#define TOGGLE_SKELETON_RENDERING '1'
 #define REFERENCE_FRAME_TIME      0.033f
 
 
@@ -51,6 +52,7 @@ static vector3f velocity;
 static const float velocity_limit = 10.f;
 static const float acceleration = 5.f;
 static const float friction = 2.f;
+static int32_t disable_skeleton_rendering = 1;
 
 static asset_ref_t font_ref;
 static font_asset_t *font;
@@ -195,6 +197,7 @@ load_level(
   exit_level = 0;
   disable_input = 0;
   velocity.data[0] = velocity.data[1] = velocity.data[2] = 0.f;
+  disable_skeleton_rendering = 1;
 }
 
 
@@ -319,13 +322,16 @@ update_level(const allocator_t* allocator)
   clear_color_and_depth_buffers();
   matrix4f identity;
   matrix4f_set_identity(&identity);
-  render_mesh_render_data(
-    skinned_mesh_mesh_render_data, &pipeline, &camera, &identity);
+  render_skinned_mesh_render_data(
+    skinned_mesh_mesh_render_data, skeleton, disable_skeleton_rendering, &pipeline, &camera, &identity);
 
   if (is_key_triggered(TILDE)) {
     disable_input = !disable_input;
     show_mouse_cursor((int32_t)disable_input);
   }
+
+  if (is_key_triggered(TOGGLE_SKELETON_RENDERING))
+    disable_skeleton_rendering = !disable_skeleton_rendering;
 
   if (!disable_input)
     update(dt);
