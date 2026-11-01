@@ -303,8 +303,8 @@ set_default_lights(pipeline_t *pipeline)
   vector3f_set_3f(&light.up, 0.f, 0.f, 0.f);
   light.attenuation_constant = 1;
   light.attenuation_linear = 0.001f;
-  set_color4f(&light.ambient, 1.f, 1.f, 1.f, 1.f);
-  set_color4f(&light.diffuse, 1.f, 1.f, 1.f, 1.f);
+  set_color4f(&light.ambient, 0.2f, 0.2f, 0.2f, 1.f);
+  set_color4f(&light.diffuse, 0.5f, 0.5f, 0.5f, 1.f);
   set_color4f(&light.specular, 0.f, 0.f, 0.f, 1.f);
   set_light_properties(0, &light, pipeline);
   enable_light(0);
