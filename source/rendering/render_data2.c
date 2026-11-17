@@ -643,3 +643,90 @@ render_skinned_mesh_render_data(
 
   disable_default_lights();
 }
+
+// TODO: unify these please. this is a bit insulting
+static
+void
+render_animated_bones(
+  skeleton_asset_t *skeleton,
+  matrix4f(*localtransform)(uint32_t),
+  uint32_t node_index,
+  skeleton_node_t *node,
+  matrix4f transform,
+  pipeline_t *pipeline)
+{
+  const color_t green = { 0.f, 1.f, 0.f, 1.f };
+  cvector_t *nodes = &skeleton->nodes;
+  float vertices[6];
+  point3f origin;
+  memset(&origin, 0, sizeof(point3f));
+  mult_set_m4f_p3f(&transform, &origin);
+  memcpy(vertices, origin.data, sizeof(float) * 3);
+
+  for (uint32_t i = 0; i < node->children.size; ++i) {
+    point3f dest;
+    uint32_t index = *cvector_as(&node->children, i, uint32_t);
+    skeleton_node_t *child = cvector_as(nodes, index, skeleton_node_t);
+    matrix4f child_transform = localtransform(index);
+    child_transform = mult_m4f(&transform, &child_transform);
+
+    memset(&dest, 0, sizeof(point3f));
+    mult_set_m4f_p3f(&child_transform, &dest);
+    memcpy(vertices + 3, dest.data, sizeof(float) * 3);
+    draw_lines(vertices, 2, green, 1, pipeline);
+
+    render_animated_bones(
+      skeleton, localtransform, index, child, child_transform, pipeline);
+  }
+}
+
+static
+void
+render_animated_skeleton(
+  skeleton_asset_t *skeleton,
+  matrix4f(*localtransform)(uint32_t),
+  pipeline_t *pipeline)
+{
+  skeleton_node_t *root = cvector_as(&skeleton->nodes, 0, skeleton_node_t);
+  disable_depth_test();
+  render_animated_bones(
+    skeleton, localtransform, 0, root, localtransform(0), pipeline);
+  enable_depth_test();
+}
+
+void
+render_animated_skinned_mesh_render_data(
+  const mesh_render_data_t *render_data,
+  const uint32_t *texture_id,
+  matrix4f(*localtransform)(uint32_t),
+  skeleton_asset_t *skeleton,
+  uint32_t hide_skeleton,
+  pipeline_t *pipeline,
+  camera_t *camera,
+  matrix4f *root)
+{
+  matrix4f out;
+  memset(&out, 0, sizeof(matrix4f));
+  camera_view_matrix(camera, &out);
+  set_matrix_mode(pipeline, MODELVIEW);
+  load_identity(pipeline);
+  post_multiply(pipeline, &out);
+
+  set_default_lights(pipeline);
+
+  push_matrix(pipeline);
+  pre_multiply(pipeline, root);
+
+  draw_meshes(
+    render_data,
+    texture_id,
+    1,
+    pipeline);
+
+  if (!hide_skeleton)
+    render_animated_skeleton(skeleton, localtransform, pipeline);
+
+  pop_matrix(pipeline);
+
+  disable_default_lights();
+}
