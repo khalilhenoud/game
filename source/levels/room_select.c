@@ -11,14 +11,11 @@
 #include <assert.h>
 #include <game/debug/text.h>
 #include <game/input/input.h>
-#include <game/levels/utils.h>
-#include <game/rendering/load_font.h>
-#include <game/rendering/load_image.h>
+#include <game/rendering/render_data.h>
 #include <entity/level/level.h>
-#include <entity/runtime/font.h>
-#include <entity/runtime/font_utils.h>
-#include <entity/runtime/texture.h>
-#include <entity/runtime/texture_utils.h>
+#include <font/font_asset.h>
+#include <library/asset/asset_ref.h>
+#include <library/containers/chashmap.h>
 #include <library/filesystem/filesystem.h>
 #include <library/framerate_controller/framerate_controller.h>
 #include <renderer/pipeline.h>
@@ -34,10 +31,92 @@ static int32_t exit_room_select = -1;
 static uint32_t exit_room_option = 0;
 static pipeline_t pipeline;
 static dir_entries_t rooms;
-static texture_runtime_t texture;
-static uint32_t tex_id;
-static font_runtime_t font;
 static const char *data_set;
+
+static packaged_font_render_data_t *font_render_data;
+static asset_ref_t font_ref;
+static font_asset_t *font;
+
+static chashmap_t ref_assets_map;
+static chashmap_t status_map;
+const static uint32_t asset_map_reservation = 256;
+
+static
+void
+load_recursive(
+  chashmap_t *ref_assets_map,
+  const asset_ref_t *asset_ref)
+{
+  assert(!chashmap_is_def(ref_assets_map));
+
+  uint32_t index;
+  chashmap_contains(ref_assets_map, *asset_ref, asset_ref_t, index);
+  if (index != CHASHTABLE_INVALID_INDEX)
+    return;
+
+  vtable_t *vtable = get_vtable(asset_ref->type_id);
+  loader_t loader = vtable->fn_get_loader();
+  void *data = NULL;
+  loader(&data, asset_ref, &g_default_allocator);
+  uint32_t count = vtable->fn_type_asset_count(data);
+
+  chashmap_insert(
+    ref_assets_map, *asset_ref, asset_ref_t, data, void*);
+
+  if (!count)
+    return;
+
+  cvector_t asset_refs;
+  cvector_setup2(&asset_refs, asset_ref_t*);
+  cvector_resize(&asset_refs, count);
+  vtable->fn_type_get_assets(data, asset_refs.data);
+
+  for (uint32_t i = 0; i < asset_refs.size; ++i) {
+    asset_ref_t **ref = cvector_as(&asset_refs, i, asset_ref_t*);
+    load_recursive(ref_assets_map, *ref);
+  }
+}
+
+static
+void
+unload_assets(chashmap_t *ref_assets_map)
+{
+  asset_ref_t *asset_ref = NULL;
+  void **data = NULL;
+
+  for (
+    chashmap_iterator_t iter = chashmap_begin(ref_assets_map);
+    !chashmap_iter_equal(iter, chashmap_end(ref_assets_map));
+    chashmap_advance(&iter)) {
+      asset_ref = chashmap_key(&iter, asset_ref_t);
+      data = chashmap_value(&iter, void *);
+      vtable_t *vtable = get_vtable(asset_ref->type_id);
+      deloader_t deloader = vtable->fn_get_deloader();
+      deloader(data, asset_ref, &g_default_allocator);
+    }
+  chashmap_cleanup(ref_assets_map, NULL);
+}
+
+// "http://stackoverflow.com/questions/12943164/replacement-for-gluperspective-with-glfrustrum"
+static
+void
+setup_view_projection_pipeline(
+  const int32_t viewport_width,
+  const int32_t viewport_height,
+  pipeline_t *pipeline)
+{
+  float view_width = (float)viewport_width;
+  float view_height = (float)viewport_height;
+  float aspect = view_width / view_height;
+  float znear = 0.1f, zfar = 4000.f;
+  float fh = (float)tan((double)60.f / 2.f / 180.f * K_PI) * znear;
+  float fw = fh * aspect;
+  pipeline_set_default(pipeline);
+  set_viewport(pipeline, 0.f, 0.f, view_width, view_height);
+  update_viewport(pipeline);
+  set_perspective(pipeline, -fw, fw, -fh, fh, znear, zfar);
+  update_projection(pipeline);
+}
 
 void
 set_level_to_load(const char *source, uint32_t option);
@@ -53,41 +132,32 @@ load_rooms(const char *dataset)
 
 static
 void
-load_font_data(
-  const level_context_t context,
-  const allocator_t *allocator)
-{
-  populate_default_font(&font.font, allocator);
-  load_font_inplace(context.data_set, &font.font, &font, allocator);
-  cstring_setup(&texture.texture.path, font.font.image_file.str, allocator);
-  load_image_buffer(context.data_set, &texture, allocator);
-  tex_id = upload_to_gpu(
-    texture.texture.path.str,
-    texture.buffer.data,
-    texture.width,
-    texture.height,
-    (renderer_image_format_t)texture.format);
-}
-
-static
-void
-unload_font_data(const allocator_t *allocator)
-{
-  free_font_runtime_internal(&font, allocator);
-  free_texture_runtime_internal(&texture, allocator);
-  evict_from_gpu(tex_id);
-}
-
-static
-void
 load_room_select(
   const level_context_t context,
   const allocator_t *allocator)
 {
   data_set = context.data_set;
 
-  load_font_data(context, allocator);
-  setup_view_projection_pipeline(&context, &pipeline);
+  cstring_setup2(&font_ref.path, "F:\\data\\shared\\fonts\\Malgun Gothic.bin");
+  font_ref.type_id = get_type_id(font_asset_t);
+
+  chashmap_def(&ref_assets_map);
+  chashmap_setup2(&ref_assets_map, asset_ref_t, void *);
+  chashmap_reserve(&ref_assets_map, asset_map_reservation);
+  load_recursive(&ref_assets_map, &font_ref);
+
+  chashmap_def(&status_map);
+  chashmap_setup2(&status_map, asset_ref_t, uint32_t);
+  chashmap_reserve(&status_map, asset_map_reservation);
+
+  void **data = NULL;
+  chashmap_at(&ref_assets_map, font_ref, asset_ref_t, void *, data);
+  font = *(font_asset_t **)data;
+
+  font_render_data = prep_font_render_data(font, &ref_assets_map, &status_map);
+
+  setup_view_projection_pipeline(
+    context.viewport.width, context.viewport.height, &pipeline);
   show_mouse_cursor(0);
   controller = controller_allocate(allocator, 60, 1u);
 
@@ -107,10 +177,12 @@ room_selection()
   // small intro text
   sprintf(name, "%s", "up down to navigate. space to select");
   text[0] = name;
-  render_text_to_screen(&font, tex_id, &pipeline, text, 1, white, 5.f, 0.f);
+  render_text_to_screen(
+    font, font_render_data->texture_id, &pipeline, text, 1, white, 5.f, 0.f);
   sprintf(name, "%s", "-------------------------------------");
   text[0] = name;
-  render_text_to_screen(&font, tex_id, &pipeline, text, 1, white, 5.f, 10.f);
+  render_text_to_screen(
+    font, font_render_data->texture_id, &pipeline, text, 1, white, 5.f, 10.f);
 
   for (uint32_t i = 0, j = 0; i < rooms.used; ++i) {
     if (strcmp(rooms.dir_names[i], "room_select") == 0)
@@ -120,8 +192,8 @@ room_selection()
     text[0] = name;
 
     render_text_to_screen(
-      &font,
-      tex_id,
+      font,
+      font_render_data->texture_id,
       &pipeline,
       text,
       1,
@@ -132,8 +204,8 @@ room_selection()
       sprintf(name, "%s", ">");
       text[0] = name;
       render_text_to_screen(
-        &font,
-        tex_id,
+        font,
+        font_render_data->texture_id,
         &pipeline,
         text,
         1,
@@ -161,11 +233,7 @@ room_selection()
 
   if (is_key_triggered(SPACE)) {
     if (strcmp(rooms.dir_names[index], "room_select") != 0) {
-      if (
-        strcmp(rooms.dir_names[index], "Silly Dancing") == 0 ||
-        strcmp(rooms.dir_names[index], "Standard Walk") == 0)
-        exit_room_option = 1;
-      else if (strcmp(rooms.dir_names[index], "a_test_level") == 0)
+      if (strcmp(rooms.dir_names[index], "a_test_level") == 0)
         exit_room_option = 2;
       else if (strcmp(rooms.dir_names[index], "a_test_anim_level") == 0)
         exit_room_option = 3;
@@ -196,7 +264,8 @@ void
 unload_room_select(const allocator_t *allocator)
 {
   controller_free(controller, allocator);
-  unload_font_data(allocator);
+  cleanup_font_render_data(font_render_data, &status_map);
+  unload_assets(&ref_assets_map);
 }
 
 static

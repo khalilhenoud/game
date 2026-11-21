@@ -1,5 +1,5 @@
 /**
- * @file to_render_data.h
+ * @file render_data.h
  * @author khalilhenoud@gmail.com
  * @brief
  * @version 0.1
@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2023
  *
  */
-#ifndef SCENE_RENDER_DATA
-#define SCENE_RENDER_DATA
+#ifndef SCENE_RENDER_DATA2
+#define SCENE_RENDER_DATA2
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,86 +17,107 @@ extern "C" {
 
 #include <stdint.h>
 #include <library/containers/cvector.h>
+#include <math/matrix4f.h>
 #include <props/color.h>
 
 
-// NOTE: This is all extremely rudimentary until the time when I implement a
-// scene graph module that can replace this.
-
-typedef struct scene_t scene_t;
-typedef struct mesh_t mesh_t;
-typedef struct skinned_mesh_t skinned_mesh_t;
-typedef struct allocator_t allocator_t;
+typedef struct chashmap_t chashmap_t;
 typedef struct camera_t camera_t;
+typedef struct mesh_render_data_t mesh_render_data_t;
 typedef struct pipeline_t pipeline_t;
+typedef struct skeleton_asset_t skeleton_asset_t;
+typedef struct sublevel_asset_t sublevel_asset_t;
+typedef struct font_asset_t font_asset_t;
+typedef struct mesh_asset_t mesh_asset_t;
 
 typedef
-struct packaged_mesh_data_t {
-  cvector_t mesh_render_data;           // mesh_render_data_t
-  cvector_t texture_runtimes;           // texture_runtime_t
-  cvector_t texture_ids;                // uint32_t
-} packaged_mesh_data_t;
+struct packaged_mesh_render_data_t {
+  cvector_t mesh_render_data;             // mesh_render_data_t
+  cvector_t texture_assets;               // asset_ref_t *
+  cvector_t texture_ids;                  // uint32_t
+} packaged_mesh_render_data_t;
 
 typedef
-struct packaged_skinned_mesh_data_t {
-  cvector_t skinned_mesh_render_data;   // mesh_render_data_t
-  cvector_t texture_runtimes;           // texture_runtime_t
-  cvector_t texture_ids;                // uint32_t
-} packaged_skinned_mesh_data_t;
-
-typedef
-struct packaged_font_data_t {
-  cvector_t fonts;                      // font_runtime_t
-  cvector_t texture_runtimes;           // texture_runtime_t
-  cvector_t texture_ids;                // uint32_t
-} packaged_font_data_t;
-
-// NOTE: a node has a transform and a list of packaged mesh or other nodes.
-// these are indices into the main packaged_scene_render_data_t struct.
-typedef
-struct packaged_scene_render_data_t {
-  cvector_t node_data;                    // node_t
-  packaged_mesh_data_t mesh_data;
-  packaged_skinned_mesh_data_t skinned_mesh_data;
-  packaged_font_data_t font_data;
+struct packaged_sublevel_render_data_t {
+  packaged_mesh_render_data_t mesh_data;
   cvector_t light_data;                   // renderer_light_t
-  cvector_t camera_data;                  // camera_t
-} packaged_scene_render_data_t;
+} packaged_sublevel_render_data_t;
+
+typedef
+struct packaged_font_render_data_t {
+  asset_ref_t *texture_asset;
+  uint32_t texture_id;
+} packaged_font_render_data_t;
+
+// sublevel
+void
+cleanup_render_data(
+  packaged_sublevel_render_data_t *render_data,
+  chashmap_t *status_map);
+
+packaged_sublevel_render_data_t *
+prep_render_data(
+  sublevel_asset_t *sublevel,
+  chashmap_t *assets_map,
+  chashmap_t *status_map);
 
 void
-free_render_data(
-  packaged_scene_render_data_t *render_data,
-  const allocator_t *allocator);
-
-packaged_scene_render_data_t *
-load_scene_render_data(
-  scene_t *scene,
-  const allocator_t *allocator);
-
-// UNUSED
-packaged_mesh_data_t *
-load_mesh_renderer_data(
-  mesh_t *mesh,
-  const color_rgba_t color,
-  const allocator_t *allocator);
-
-void
-prep_packaged_render_data(
-  const char *data_set,
-  const char *folder,
-  packaged_scene_render_data_t *render_data,
-  const allocator_t *allocator);
-
-void
-cleanup_packaged_render_data(
-  packaged_scene_render_data_t *render_data,
-  const allocator_t *allocator);
-
-void
-render_packaged_scene_data(
-  packaged_scene_render_data_t *render_data,
+render_render_data(
+  packaged_sublevel_render_data_t *render_data,
   pipeline_t *pipeline,
-  camera_t *camera);
+  camera_t *camera,
+  matrix4f *root);
+
+// font
+void
+cleanup_font_render_data(
+  packaged_font_render_data_t *render_data,
+  chashmap_t *status_map);
+
+packaged_font_render_data_t *
+prep_font_render_data(
+  font_asset_t *font,
+  chashmap_t *assets_map,
+  chashmap_t *status_map);
+
+// mesh
+packaged_mesh_render_data_t *
+prep_mesh_render_data(
+  mesh_asset_t *mesh,
+  chashmap_t *assets_map,
+  chashmap_t *status_map);
+
+void
+cleanup_mesh_render_data(
+  packaged_mesh_render_data_t *render_data,
+  chashmap_t *status_map);
+
+void
+render_mesh_render_data(
+  packaged_mesh_render_data_t *render_data,
+  pipeline_t *pipeline,
+  camera_t *camera,
+  matrix4f *root);
+
+void
+render_skinned_mesh_render_data(
+  packaged_mesh_render_data_t *render_data,
+  skeleton_asset_t *skeleton,
+  uint32_t hide_skeleton,
+  pipeline_t *pipeline,
+  camera_t *camera,
+  matrix4f *root);
+
+void
+render_animated_skinned_mesh_render_data(
+  const mesh_render_data_t *render_data,
+  const uint32_t *texture_id,
+  matrix4f(*localtransform)(uint32_t),
+  skeleton_asset_t *skeleton,
+  uint32_t hide_skeleton,
+  pipeline_t *pipeline,
+  camera_t *camera,
+  matrix4f *root);
 
 #ifdef __cplusplus
 }

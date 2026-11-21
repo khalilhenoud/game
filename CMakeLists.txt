@@ -112,11 +112,7 @@ endif()
 # add the executable
 add_library(${PROJECT_NAME} SHARED
       ./source/memory_tracking/memory_tracking.cpp
-      ./source/rendering/load_font.c
-      ./source/rendering/load_image.c
       ./source/rendering/render_data.c
-      ./source/rendering/render_data2.c
-      ./source/rendering/render.c
       ./source/logic/player.c
       ./source/logic/camera.c
       ./source/logic/collision_utils.c
@@ -125,13 +121,10 @@ add_library(${PROJECT_NAME} SHARED
       ./source/debug/text.c
       ./source/debug/face.c
       ./source/debug/flags.c
-      ./source/levels/anim_preview.c
-      ./source/levels/generic_level.c
       ./source/levels/test_level.c
       ./source/levels/test_anim_level.c
       ./source/levels/test_mesh_level.c
       ./source/levels/room_select.c
-      ./source/levels/utils.c
       ./source/input/input.c
       ./source/game.c
       ./include/game/internal/module.h)

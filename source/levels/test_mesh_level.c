@@ -16,9 +16,8 @@
 #include <game/debug/flags.h>
 #include <game/debug/text.h>
 #include <game/input/input.h>
-#include <game/levels/utils.h>
 #include <game/logic/camera.h>
-#include <game/rendering/render_data2.h>
+#include <game/rendering/render_data.h>
 #include <entity/level/level.h>
 #include <font/font_asset.h>
 #include <library/asset/asset_ref.h>
@@ -120,6 +119,75 @@ unload_assets(chashmap_t *ref_assets_map)
 
 static
 void
+render_basic_controls(
+  font_asset_t *font,
+  uint32_t font_image_id,
+  pipeline_t *pipeline,
+  float dt_seconds,
+  uint64_t frame_rate,
+  int32_t disable_input)
+{
+  if (disable_input) {
+    const char* text[1];
+
+    text[0] = "press [0] to return to room selection";
+    render_text_to_screen(
+      font,
+      font_image_id,
+      pipeline,
+      text,
+      1,
+      white,
+      0.f, 0.f);
+  } else {
+    const char* text[6];
+    char delta_str[128] = { 0 };
+    char frame_str[128] = { 0 };
+
+    sprintf(delta_str, "delta: %f", dt_seconds);
+    sprintf(frame_str, "fps: %llu", frame_rate);
+
+    // display simple instructions.
+    text[0] = delta_str;
+    text[1] = frame_str;
+    text[2] = "----------------";
+    text[3] = "[C] RESET CAMERA";
+    text[4] = "[~] CAMERA UNLOCK/LOCK";
+    text[5] = "[1/2/WASD/EQ] CAMERA SPEED/MOVEMENT";
+    render_text_to_screen(
+      font,
+      font_image_id,
+      pipeline,
+      text,
+      6,
+      white,
+      0.f, 0.f);
+  }
+}
+
+// "http://stackoverflow.com/questions/12943164/replacement-for-gluperspective-with-glfrustrum"
+static
+void
+setup_view_projection_pipeline(
+  const int32_t viewport_width,
+  const int32_t viewport_height,
+  pipeline_t *pipeline)
+{
+  float view_width = (float)viewport_width;
+  float view_height = (float)viewport_height;
+  float aspect = view_width / view_height;
+  float znear = 0.1f, zfar = 4000.f;
+  float fh = (float)tan((double)60.f / 2.f / 180.f * K_PI) * znear;
+  float fw = fh * aspect;
+  pipeline_set_default(pipeline);
+  set_viewport(pipeline, 0.f, 0.f, view_width, view_height);
+  update_viewport(pipeline);
+  set_perspective(pipeline, -fw, fw, -fh, fh, znear, zfar);
+  update_projection(pipeline);
+}
+
+static
+void
 vec3f_set_all(vector3f *vec, float val)
 {
   vec->data[0] = vec->data[1] = vec->data[2] = val;
@@ -172,7 +240,8 @@ load_level(
   font_render_data = prep_font_render_data(font, &ref_assets_map, &status_map);
   mesh_render_data = prep_mesh_render_data(mesh, &ref_assets_map, &status_map);
 
-  setup_view_projection_pipeline(&context, &pipeline);
+   setup_view_projection_pipeline(
+    context.viewport.width, context.viewport.height, &pipeline);
   show_mouse_cursor(0);
 
   controller = controller_allocate(allocator, 60, 1u);
@@ -314,7 +383,7 @@ update_level(const allocator_t* allocator)
   else if (is_key_triggered(KEY_EXIT_LEVEL))
     exit_level = 1;
 
-  render_basic_controls2(
+  render_basic_controls(
     font, font_render_data->texture_id, &pipeline, dt, fps, disable_input);
   flush_operations();
 }

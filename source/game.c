@@ -10,8 +10,6 @@
  */
 #include <game/game.h>
 #include <game/input/input.h>
-#include <game/levels/anim_preview.h>
-#include <game/levels/generic_level.h>
 #include <game/levels/room_select.h>
 #include <game/levels/test_level.h>
 #include <game/memory_tracking/memory_tracking.h>
@@ -63,10 +61,6 @@ construct_level()
 {
   if (in_level_select)
     construct_level_selector(&level);
-  else if (level_option == 0)
-    construct_generic_level(&level);
-  else if (level_option == 1)
-    construct_anim_preview_level(&level);
   else if (level_option == 2)
     construct_test_level(&level);
   else if (level_option == 3)
